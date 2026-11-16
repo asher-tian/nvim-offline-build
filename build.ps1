@@ -68,6 +68,7 @@ $directories = @(
     "runtime/neovim",
     "runtime/node",
     "runtime/npm",
+    "runtime/npm/node_modules",
     "runtime/npm-global",
     "runtime/commands",
     "runtime/tools/bin"
@@ -82,6 +83,7 @@ Copy-Item -Path (Join-Path $repoRoot "config/nvim") -Destination (Join-Path $bun
 Copy-Item -Path (Join-Path $repoRoot "templates/nvim") -Destination (Join-Path $bundleRoot "nvim") -Force
 Copy-Item -Path (Join-Path $repoRoot "templates/install.sh") -Destination (Join-Path $bundleRoot "install.sh") -Force
 Copy-Item -Path (Join-Path $repoRoot "templates/verify.sh") -Destination (Join-Path $bundleRoot "verify.sh") -Force
+Copy-Item -Path (Join-Path $repoRoot "templates/npmrc") -Destination (Join-Path $bundleRoot "config/npmrc") -Force
 
 # 1. Download target Linux binaries. Keep their original archives intact on Windows.
 $nvim = $versions.runtime.neovim
@@ -140,7 +142,9 @@ New-Item -ItemType Directory -Force -Path (Join-Path $repoRoot "locks/npm") | Ou
 Copy-Item -LiteralPath $npmLockDestination -Destination $npmLockSource -Force
 Copy-Item -LiteralPath (Join-Path $npmWork "package.json") -Destination (Join-Path $bundleRoot "runtime/npm/package.json") -Force
 Copy-Item -LiteralPath $npmLockDestination -Destination (Join-Path $bundleRoot "runtime/npm/package-lock.json") -Force
-Copy-Item -LiteralPath (Join-Path $npmWork "node_modules") -Destination (Join-Path $bundleRoot "runtime/npm/node_modules") -Recurse -Force
+$bundleNodeModules = Join-Path $bundleRoot "runtime/npm/node_modules"
+New-Item -ItemType Directory -Force -Path $bundleNodeModules | Out-Null
+Copy-Item -Path (Join-Path $npmWork "node_modules/*") -Destination $bundleNodeModules -Recurse -Force
 
 # Generate POSIX command shims from the installed npm packages' bin metadata.
 $nodeModules = Join-Path $npmWork "node_modules"
