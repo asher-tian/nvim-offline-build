@@ -1,4 +1,5 @@
 /work/
+/cache/
 /dist/
 **/node_modules/
 *.tar.gz
