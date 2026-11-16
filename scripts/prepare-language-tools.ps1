@@ -51,6 +51,37 @@ foreach ($toolName in @("shellcheck", "verible")) {
     Copy-Item -LiteralPath $toolCached -Destination (Join-Path $payloadRoot $tool.file) -Force
 }
 
+# ShellCheck is GPL-3.0. Ship the exact corresponding source tree with the
+# offline binary so the bundle retains the complete license materials.
+$shellcheck = $versions.tools.shellcheck
+$shellcheckSourceCache = Join-Path $cacheRoot ("source-cache/shellcheck-" + $shellcheck.version)
+$shellcheckSourceCommit = $null
+if (Test-Path (Join-Path $shellcheckSourceCache ".git")) {
+    $shellcheckSourceCommit = (& git -C $shellcheckSourceCache rev-parse HEAD).Trim()
+}
+if ($shellcheckSourceCommit -ne $shellcheck.sourceCommit) {
+    if (Test-Path $shellcheckSourceCache) {
+        Remove-Item -LiteralPath $shellcheckSourceCache -Recurse -Force
+    }
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $shellcheckSourceCache) | Out-Null
+    & git clone --depth 1 --branch $shellcheck.sourceRef $shellcheck.sourceRepo $shellcheckSourceCache
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not fetch the ShellCheck $($shellcheck.version) corresponding source."
+    }
+    $shellcheckSourceCommit = (& git -C $shellcheckSourceCache rev-parse HEAD).Trim()
+}
+if ($shellcheckSourceCommit -ne $shellcheck.sourceCommit) {
+    throw "ShellCheck source commit mismatch: expected $($shellcheck.sourceCommit), got $shellcheckSourceCommit"
+}
+
+$shellcheckSourceDestination = Join-Path $bundleRoot ("licenses/sources/shellcheck-" + $shellcheck.version)
+New-Item -ItemType Directory -Force -Path $shellcheckSourceDestination | Out-Null
+Get-ChildItem -LiteralPath $shellcheckSourceCache -Force |
+    Where-Object { $_.Name -ne ".git" } |
+    ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination $shellcheckSourceDestination -Recurse -Force
+    }
+
 # Resolve and install only prebuilt wheels for CPython 3.11 / Linux x86_64.
 # uv performs target-platform resolution on Windows, so no WSL/VM/Linux host is
 # needed. The generated lock includes hashes and is committed for repeatability.
