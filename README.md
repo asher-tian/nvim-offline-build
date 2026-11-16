@@ -158,7 +158,10 @@ nvim/
 ├── install.sh
 ├── verify.sh
 ├── config/
-│   ├── nvim/                    # Neovim 配置
+│   ├── nvim/
+│   │   ├── lua/                 # Neovim Lua 配置
+│   │   └── syntax/
+│   │       └── icl.vim          # IEEE 1687 ICL 语法高亮
 │   └── npmrc                    # 私有 npm 配置
 ├── fonts/maple-mono/            # Maple Mono NF 静态 TTF + OFL license
 ├── install-fonts.sh             # 可选：注册系统字体
@@ -193,7 +196,7 @@ runtime/commands 是该 Neovim 安装目录私有的命令目录，不是系统�
 | JavaScript | TypeScript Language Server |
 | TypeScript | TypeScript Language Server |
 | JSON | vscode-json-language-server |
-| Tcl / Tk | Neovim 内置 Tcl 语法高亮；额外识别 `.tm`、`.itcl`、`.tk` 扩展名；没有配置第三方 LSP 
+| Tcl / Tk | Neovim 内置 Tcl 语法高亮；额外识别 `.tm`、`.itcl`、`.tk` 扩展名；没有配置第三方 LSP |
 | CSH / TCSH | Neovim 内置语法和文件类型识别；没有配置第三方 LSP |
 | ICL / IJTAG | 仓库自带 Vim Syntax；`.icl` 自动识别；仅语法高亮，不需要 LSP |
 
