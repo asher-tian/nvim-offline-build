@@ -95,7 +95,7 @@ dist/                       # 最终 tar.gz
 - 插件按锁定 commit 查找快照；命中后不访问 GitHub。快照不存在时才使用本地 Git 对象缓存，必要时才 fetch。
 - 配置、启动脚本、manifest 和最终离线包每次重新组装，确保仓库中的最新修改进入产物。
 
-首次启用增量构建时，脚本会尝试把旧版 `work/bundle/payload`、`work/npm` 和 `work/bundle/data/.../start` 中的插件工作树迁移到新缓存目录，避免无条件重新下载和安装。迁移后的二进制仍会重新校验 SHA256。
+首次启用增量构建时，脚本会优先迁移旧版 `work/bundle/payload`、`work/npm` 和 `work/bundle/data/.../start`；如果旧工作目录不完整，则尝试从 `dist/` 中上一次成功生成的 tar.gz 提取缓存。迁移后的二进制仍会重新校验 SHA256，npm 迁移会核对 package.json / package-lock，插件快照按旧构建 manifest 中的 commit 保存。
 
 参数：
 
