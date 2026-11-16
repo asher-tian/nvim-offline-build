@@ -1,6 +1,10 @@
 vim.filetype.add({
     extension = {
         csh = "csh",
+        tcl = "tcl",
+        tm = "tcl",
+        itcl = "tcl",
+        tk = "tcl",
         tcsh = "csh",
     },
     filename = {
