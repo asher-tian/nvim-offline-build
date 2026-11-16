@@ -43,6 +43,7 @@ awk -v version="$GLIBC_VERSION" 'BEGIN {
 [ -f "$PAYLOAD/cpython-3.11.18+20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz" ] || fail "Missing bundled Python 3.11.18 payload."
 [ -f "$PAYLOAD/shellcheck-v0.11.0.linux.x86_64.tar.gz" ] || fail "Missing ShellCheck payload."
 [ -f "$PAYLOAD/verible-v0.0-4300-ga832669d-linux-static-x86_64.tar.gz" ] || fail "Missing Verible payload."
+[ -f "$ROOT/licenses/sources/shellcheck-0.11.0/LICENSE" ] || fail "Missing corresponding ShellCheck GPL source and license."
 
 # Fail early on noexec filesystems. The installation directory must allow execution.
 mkdir -p "$ROOT/cache/tmp"
