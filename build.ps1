@@ -47,7 +47,8 @@ $cacheRoot = Join-Path $repoRoot "cache"
 $downloadCache = Join-Path $cacheRoot "downloads"
 $npmDownloadCache = Join-Path $cacheRoot "npm-downloads"
 $npmInstallCache = Join-Path $cacheRoot "npm-installs"
-$pluginCacheRoot = Join-Path $cacheRoot "plugins"
+$pluginGitCacheRoot = Join-Path $cacheRoot "plugin-git"
+$pluginSnapshotRoot = Join-Path $cacheRoot "plugin-snapshots"
 
 if ($Clean) {
     if (Test-Path $workRoot) {
@@ -58,14 +59,95 @@ if ($Clean) {
     }
 }
 
-# work/ is disposable. It is rebuilt every time; cache/ is not.
+foreach ($directory in @($downloadCache, $npmDownloadCache, $npmInstallCache, $pluginGitCacheRoot, $pluginSnapshotRoot)) {
+    New-Item -ItemType Directory -Force -Path $directory | Out-Null
+}
+
+# One-time migration: reuse artifacts produced by the previous build layout
+# before discarding work/. This avoids downloading everything again immediately
+# after upgrading the build scripts.
+if ((-not $Clean) -and (Test-Path $workRoot)) {
+    $legacyPayload = Join-Path $workRoot "bundle/payload"
+    if (Test-Path $legacyPayload) {
+        foreach ($legacyFile in Get-ChildItem -LiteralPath $legacyPayload -File -Force) {
+            $cachedFile = Join-Path $downloadCache $legacyFile.Name
+            if (-not (Test-Path $cachedFile)) {
+                Copy-Item -LiteralPath $legacyFile.FullName -Destination $cachedFile -Force
+                Write-Host "Migrated previous download into cache: $($legacyFile.Name)"
+            }
+        }
+
+        $legacyNodeChecksums = Join-Path $legacyPayload "node-SHASUMS256.txt"
+        if ((Test-Path $legacyNodeChecksums) -and (-not (Test-Path (Join-Path $downloadCache ("node-" + $versions.runtime.node.version + "-SHASUMS256.txt"))))) {
+            Copy-Item -LiteralPath $legacyNodeChecksums -Destination (Join-Path $downloadCache ("node-" + $versions.runtime.node.version + "-SHASUMS256.txt")) -Force
+        }
+
+        $legacyShfmtChecksums = Join-Path $legacyPayload "shfmt-sha256sums.txt"
+        if ((Test-Path $legacyShfmtChecksums) -and (-not (Test-Path (Join-Path $downloadCache ("shfmt-" + $versions.tools.shfmt.version + "-sha256sums.txt"))))) {
+            Copy-Item -LiteralPath $legacyShfmtChecksums -Destination (Join-Path $downloadCache ("shfmt-" + $versions.tools.shfmt.version + "-sha256sums.txt")) -Force
+        }
+    }
+
+    # Migrate the previous npm installation into the new lock-keyed cache.
+    $legacyNpmRoot = Join-Path $workRoot "npm"
+    $legacyNodeModules = Join-Path $legacyNpmRoot "node_modules"
+    $legacyPackageJson = Join-Path $repoRoot "package.json"
+    $legacyLockSource = Join-Path $repoRoot "locks/npm/package-lock.json"
+    $legacyLockInWork = Join-Path $legacyNpmRoot "package-lock.json"
+
+    if ((Test-Path $legacyNodeModules) -and ((Test-Path $legacyLockSource) -or (Test-Path $legacyLockInWork))) {
+        if (-not (Test-Path $legacyLockSource)) {
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $legacyLockSource) | Out-Null
+            Copy-Item -LiteralPath $legacyLockInWork -Destination $legacyLockSource -Force
+        }
+
+        $legacyPackageHash = (Get-FileHash -LiteralPath $legacyPackageJson -Algorithm SHA256).Hash.ToLowerInvariant()
+        $legacyLockHash = (Get-FileHash -LiteralPath $legacyLockSource -Algorithm SHA256).Hash.ToLowerInvariant()
+        $legacyNpmKey = Get-TextSha256 -Text ($legacyPackageHash + "|" + $legacyLockHash + "|" + $npmActual + "|linux-x64")
+        $legacyNpmEntry = Join-Path $npmInstallCache $legacyNpmKey
+        $legacyNpmMarker = Join-Path $legacyNpmEntry "cache-key.txt"
+
+        if (-not (Test-Path $legacyNpmMarker)) {
+            if (Test-Path $legacyNpmEntry) {
+                Remove-Item -LiteralPath $legacyNpmEntry -Recurse -Force
+            }
+            New-Item -ItemType Directory -Force -Path $legacyNpmEntry | Out-Null
+            Copy-Item -LiteralPath $legacyNodeModules -Destination $legacyNpmEntry -Recurse -Force
+            Write-Utf8Lf -Path $legacyNpmMarker -Content $legacyNpmKey
+            Write-Host "Migrated previous npm node_modules into cache: $legacyNpmKey"
+        }
+    }
+
+    # Previous bundles already contained plugin trees checked out at the
+    # commits recorded in locks/plugins.lock.json. Preserve them as snapshots.
+    $legacyPluginRoot = Join-Path $workRoot "bundle/data/nvim/site/pack/offline/start"
+    $legacyPluginLock = Join-Path $repoRoot "locks/plugins.lock.json"
+    if ((Test-Path $legacyPluginRoot) -and (Test-Path $legacyPluginLock)) {
+        $legacyPluginEntries = (Get-Content -LiteralPath $legacyPluginLock -Raw | ConvertFrom-Json).plugins
+        foreach ($legacyPlugin in $legacyPluginEntries) {
+            $legacyPluginSource = Join-Path $legacyPluginRoot $legacyPlugin.name
+            $legacySnapshotParent = Join-Path $pluginSnapshotRoot $legacyPlugin.name
+            $legacySnapshot = Join-Path $legacySnapshotParent $legacyPlugin.commit
+            $legacySnapshotMarker = "$legacySnapshot.complete"
+
+            if ((Test-Path $legacyPluginSource) -and (-not (Test-Path $legacySnapshotMarker))) {
+                if (Test-Path $legacySnapshot) {
+                    Remove-Item -LiteralPath $legacySnapshot -Recurse -Force
+                }
+                New-Item -ItemType Directory -Force -Path $legacySnapshotParent | Out-Null
+                Copy-Item -LiteralPath $legacyPluginSource -Destination $legacySnapshot -Recurse -Force
+                Write-Utf8Lf -Path $legacySnapshotMarker -Content $legacyPlugin.commit
+                Write-Host "Migrated previous plugin snapshot: $($legacyPlugin.name) [$($legacyPlugin.commit)]"
+            }
+        }
+    }
+}
+
+# work/ is disposable. Recreate it after attempting the one-time cache migration.
 if (Test-Path $workRoot) {
     Remove-Item -LiteralPath $workRoot -Recurse -Force
 }
-
-foreach ($directory in @($downloadCache, $npmDownloadCache, $npmInstallCache, $pluginCacheRoot, $bundleRoot)) {
-    New-Item -ItemType Directory -Force -Path $directory | Out-Null
-}
+New-Item -ItemType Directory -Force -Path $bundleRoot | Out-Null
 
 Write-Host ""
 Write-Host "Building CentOS 7 x86_64 Neovim offline bundle"
@@ -297,7 +379,7 @@ exec "$ROOT/runtime/node/bin/node" "$ROOT/runtime/npm/node_modules/__PACKAGE__/_
     }
 }
 
-# 4. Materialize plugins from persistent bare Git caches.
+# 4. Materialize plugins from commit-keyed snapshots and persistent bare Git caches.
 $pluginManifest = Get-Content (Join-Path $repoRoot "plugins.json") -Raw | ConvertFrom-Json
 $pluginLockPath = Join-Path $repoRoot "locks/plugins.lock.json"
 $oldPluginLock = $null
@@ -318,8 +400,41 @@ foreach ($plugin in $pluginManifest.plugins) {
             Select-Object -First 1
     }
 
+    $commit = $null
+    $mustFetchBranch = [bool]$RefreshLocks
+    if (-not $lockedPlugin) {
+        $mustFetchBranch = $true
+    } elseif (-not $lockedPlugin.commit) {
+        $mustFetchBranch = $true
+    } else {
+        $commit = [string]$lockedPlugin.commit
+    }
+
+    $destination = Join-Path $pluginRoot $plugin.name
+    $snapshotParent = Join-Path $pluginSnapshotRoot $plugin.name
+    $snapshotPath = $null
+    $snapshotMarker = $null
+
+    if ($commit) {
+        $snapshotPath = Join-Path $snapshotParent $commit
+        $snapshotMarker = "$snapshotPath.complete"
+    }
+
+    # A complete snapshot for the locked commit needs no Git operation at all.
+    if ((-not $mustFetchBranch) -and $snapshotPath -and (Test-Path $snapshotPath) -and (Test-Path $snapshotMarker)) {
+        Copy-Item -LiteralPath $snapshotPath -Destination $destination -Recurse -Force
+        Write-Host "Plugin snapshot cache hit: $($plugin.name) [$commit]"
+        $resolvedPlugins += [pscustomobject]@{
+            name = $plugin.name
+            repo = $plugin.repo
+            ref = $plugin.ref
+            commit = $commit
+        }
+        continue
+    }
+
     $cacheName = ([string]$plugin.name) + ".git"
-    $pluginCacheRepo = Join-Path $pluginCacheRoot $cacheName
+    $pluginCacheRepo = Join-Path $pluginGitCacheRoot $cacheName
 
     if (-not (Test-Path (Join-Path $pluginCacheRepo "HEAD"))) {
         if (Test-Path $pluginCacheRepo) {
@@ -327,11 +442,11 @@ foreach ($plugin in $pluginManifest.plugins) {
         }
         & git init --bare $pluginCacheRepo
         if ($LASTEXITCODE -ne 0) {
-            throw "Could not initialize plugin cache for $($plugin.name)"
+            throw "Could not initialize plugin Git cache for $($plugin.name)"
         }
         & git "--git-dir=$pluginCacheRepo" config core.longpaths true
         if ($LASTEXITCODE -ne 0) {
-            throw "Could not configure plugin cache for $($plugin.name)"
+            throw "Could not configure plugin Git cache for $($plugin.name)"
         }
         & git "--git-dir=$pluginCacheRepo" remote add origin $plugin.repo
         if ($LASTEXITCODE -ne 0) {
@@ -348,34 +463,7 @@ foreach ($plugin in $pluginManifest.plugins) {
         }
     }
 
-    $commit = $null
-    $mustFetchBranch = [bool]$RefreshLocks
-    if (-not $lockedPlugin) {
-        $mustFetchBranch = $true
-    } elseif (-not $lockedPlugin.commit) {
-        $mustFetchBranch = $true
-    }
-
-    if (-not $mustFetchBranch) {
-        $lockedCommit = [string]$lockedPlugin.commit
-        & git "--git-dir=$pluginCacheRepo" cat-file -e "$lockedCommit^{commit}" 2>$null
-        $commitCached = ($LASTEXITCODE -eq 0)
-
-        if ($commitCached) {
-            $commit = $lockedCommit
-            Write-Host "Plugin cache hit: $($plugin.name) [$commit]"
-        } else {
-            Write-Host "Plugin cache miss: $($plugin.name) [$lockedCommit]"
-            & git "--git-dir=$pluginCacheRepo" fetch --depth 1 origin $lockedCommit
-            if ($LASTEXITCODE -ne 0) {
-                throw "git fetch failed for plugin $($plugin.name), commit $lockedCommit"
-            }
-            $commit = (& git "--git-dir=$pluginCacheRepo" rev-parse "FETCH_HEAD^{commit}").Trim()
-            if ($commit -ne $lockedCommit) {
-                throw "Plugin lock mismatch for $($plugin.name): expected $lockedCommit, got $commit"
-            }
-        }
-    } else {
+    if ($mustFetchBranch) {
         $fetchRef = "refs/heads/$($plugin.ref)"
         Write-Host "Fetching plugin branch: $($plugin.name) [$fetchRef]"
         & git "--git-dir=$pluginCacheRepo" fetch --depth 1 origin $fetchRef
@@ -383,30 +471,63 @@ foreach ($plugin in $pluginManifest.plugins) {
             throw "git fetch failed for plugin $($plugin.name), ref $fetchRef"
         }
         $commit = (& git "--git-dir=$pluginCacheRepo" rev-parse "FETCH_HEAD^{commit}").Trim()
+    } else {
+        $lockedCommit = $commit
+        & git "--git-dir=$pluginCacheRepo" cat-file -e "$lockedCommit^{commit}" 2>$null
+        $commitCached = ($LASTEXITCODE -eq 0)
+
+        if ($commitCached) {
+            Write-Host "Plugin Git object cache hit: $($plugin.name) [$commit]"
+        } else {
+            Write-Host "Plugin Git object cache miss: $($plugin.name) [$commit]"
+            & git "--git-dir=$pluginCacheRepo" fetch --depth 1 origin $lockedCommit
+            if ($LASTEXITCODE -ne 0) {
+                throw "git fetch failed for plugin $($plugin.name), commit $lockedCommit"
+            }
+            $fetchedCommit = (& git "--git-dir=$pluginCacheRepo" rev-parse "FETCH_HEAD^{commit}").Trim()
+            if ($fetchedCommit -ne $lockedCommit) {
+                throw "Plugin lock mismatch for $($plugin.name): expected $lockedCommit, got $fetchedCommit"
+            }
+        }
     }
 
-    $destination = Join-Path $pluginRoot $plugin.name
-    if (Test-Path $destination) {
-        Remove-Item -LiteralPath $destination -Recurse -Force
-    }
+    # A refreshed branch may resolve to a snapshot already present in cache.
+    $snapshotPath = Join-Path $snapshotParent $commit
+    $snapshotMarker = "$snapshotPath.complete"
+    if ((Test-Path $snapshotPath) -and (Test-Path $snapshotMarker)) {
+        Copy-Item -LiteralPath $snapshotPath -Destination $destination -Recurse -Force
+        Write-Host "Plugin snapshot cache hit: $($plugin.name) [$commit]"
+    } else {
+        if (Test-Path $snapshotPath) {
+            Remove-Item -LiteralPath $snapshotPath -Recurse -Force
+        }
+        if (Test-Path $snapshotMarker) {
+            Remove-Item -LiteralPath $snapshotMarker -Force
+        }
 
-    & git clone --shared --no-checkout $pluginCacheRepo $destination
-    if ($LASTEXITCODE -ne 0) {
-        throw "Could not materialize cached plugin $($plugin.name)"
-    }
-    & git -C $destination config core.autocrlf false
-    & git -C $destination config core.longpaths true
-    & git -C $destination checkout --detach $commit
-    if ($LASTEXITCODE -ne 0) {
-        throw "Could not checkout plugin $($plugin.name) at $commit"
-    }
+        & git clone --shared --no-checkout $pluginCacheRepo $destination
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not materialize cached plugin $($plugin.name)"
+        }
+        & git -C $destination config core.autocrlf false
+        & git -C $destination config core.longpaths true
+        & git -C $destination checkout --detach $commit
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not checkout plugin $($plugin.name) at $commit"
+        }
 
-    $checkedOutCommit = (& git -C $destination rev-parse HEAD).Trim()
-    if ($checkedOutCommit -ne $commit) {
-        throw "Plugin checkout mismatch for $($plugin.name): expected $commit, got $checkedOutCommit"
-    }
+        $checkedOutCommit = (& git -C $destination rev-parse HEAD).Trim()
+        if ($checkedOutCommit -ne $commit) {
+            throw "Plugin checkout mismatch for $($plugin.name): expected $commit, got $checkedOutCommit"
+        }
 
-    Remove-Item -LiteralPath (Join-Path $destination ".git") -Recurse -Force
+        Remove-Item -LiteralPath (Join-Path $destination ".git") -Recurse -Force
+
+        New-Item -ItemType Directory -Force -Path $snapshotParent | Out-Null
+        Copy-Item -LiteralPath $destination -Destination $snapshotPath -Recurse -Force
+        Write-Utf8Lf -Path $snapshotMarker -Content $commit
+        Write-Host "Saved plugin snapshot: $($plugin.name) [$commit]"
+    }
 
     $resolvedPlugins += [pscustomobject]@{
         name = $plugin.name
