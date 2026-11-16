@@ -95,7 +95,7 @@ dist/                       # 最终 tar.gz
 - 插件按锁定 commit 查找快照；命中后不访问 GitHub。快照不存在时才使用本地 Git 对象缓存，必要时才 fetch。
 - 配置、启动脚本、manifest 和最终离线包每次重新组装，确保仓库中的最新修改进入产物。
 
-首次启用增量构建时，脚本会尝试把旧版 `work/bundle/payload`、`work/npm` 和旧离线包中的插件工作树迁移到新缓存目录，避免无条件重新下载和安装。
+首次启用增量构建时，脚本会尝试把旧版 `work/bundle/payload`、`work/npm` 和 `work/bundle/data/.../start` 中的插件工作树迁移到新缓存目录，避免无条件重新下载和安装。迁移后的二进制仍会重新校验 SHA256。
 
 参数：
 
@@ -113,7 +113,7 @@ dist/                       # 最终 tar.gz
 .\build.ps1 -OutputDirectory D:\Artifacts
 ~~~
 
-`-Clean` 与 `-RefreshLocks` 可以组合使用。正常修改 Lua 配置、Shell 脚本或构建模板时，不需要使用这两个参数。
+`-Clean` 与 `-RefreshLocks` 可以组合使用。正常修改 Lua 配置、Shell 脚本或构建模板时，不需要使用这两个参数。修改 `package.json` 中的依赖版本时，应执行 `-RefreshLocks` 更新 npm 锁文件；之后提交更新后的 `locks/npm/package-lock.json`。
 
 ## CentOS 7 部署
 
