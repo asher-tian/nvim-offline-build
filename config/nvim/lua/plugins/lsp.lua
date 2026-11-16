@@ -16,6 +16,19 @@ local servers = {
     bashls = {
         cmd = { "bash-language-server", "start" },
         filetypes = { "sh" },
+        settings = {
+            bashIde = {
+                shellcheckPath = "shellcheck",
+                shfmt = {
+                    path = "shfmt",
+                },
+            },
+        },
+    },
+    verible = {
+        cmd = { "verible-verilog-ls" },
+        filetypes = { "systemverilog", "verilog" },
+        root_markers = { "verible.filelist", ".git" },
     },
     html = {
         cmd = { "vscode-html-language-server", "--stdio" },
@@ -36,6 +49,28 @@ for name, config in pairs(servers) do
     vim.lsp.config(name, config)
     vim.lsp.enable(name)
 end
+
+-- tclint documents this direct LSP start pattern. It also supports EDA Tcl
+-- variants such as SDC, XDC and UPF; all Python dependencies are bundled.
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "tcl", "sdc", "xdc", "upf" },
+    callback = function(event)
+        local root_dir = vim.fs.root(event.buf, {
+            "tclint.toml",
+            ".tclint",
+            "pyproject.toml",
+            ".git",
+        }) or vim.fn.getcwd()
+
+        vim.lsp.start({
+            name = "tclint",
+            cmd = { "tclsp" },
+            root_dir = root_dir,
+        }, {
+            bufnr = event.buf,
+        })
+    end,
+})
 
 vim.api.nvim_create_autocmd("LspAttach", {
     callback = function(event)
