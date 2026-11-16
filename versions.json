@@ -40,5 +40,15 @@
       "url": "https://github.com/mvdan/sh/releases/download/v3.11.0/shfmt_v3.11.0_linux_amd64",
       "checksumUrl": "https://github.com/mvdan/sh/releases/download/v3.11.0/sha256sums.txt"
     }
+  },
+  "fonts": {
+    "mapleMonoNf": {
+      "version": "7.9",
+      "file": "MapleMono-NF.zip",
+      "url": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-NF.zip",
+      "checksumFile": "MapleMono-NF.sha256",
+      "checksumUrl": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-NF.sha256",
+      "family": "Maple Mono NF"
+    }
   }
 }
