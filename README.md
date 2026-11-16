@@ -162,7 +162,7 @@ nvim/
 │   └── npmrc                    # 私有 npm 配置
 ├── fonts/maple-mono/            # Maple Mono NF 静态 TTF + OFL license
 ├── install-fonts.sh             # 可选：注册系统字体
-└── uninstall-fonts.sh           # 可选：移除字体注册
+├── uninstall-fonts.sh           # 可选：移除字体注册
 ├── data/nvim/site/pack/          # 插件
 ├── state/nvim/                  # undo、swap、backup 等状态
 ├── cache/                       # Neovim、Pyright、npm、临时缓存
