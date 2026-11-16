@@ -194,6 +194,19 @@ exec "$ROOT/runtime/node/bin/node" "$ROOT/runtime/npm/node_modules/__PACKAGE__/_
 '@
         $shim = $shim.Replace("__PACKAGE__", $packageRelative).Replace("__TARGET__", $target)
         Write-Utf8Lf -Path $shimPath -Content $shim
+
+        # Validate the generated POSIX script has real LF line endings and no CR bytes.
+        $shimText = [System.IO.File]::ReadAllText($shimPath)
+        $shimBytes = [System.IO.File]::ReadAllBytes($shimPath)
+        if (-not $shimText.StartsWith("#!/bin/sh`n", [System.StringComparison]::Ordinal)) {
+            throw "Generated command shim has an invalid shebang or missing LF newline: $shimPath"
+        }
+        if ($shimText.Contains('\n')) {
+            throw "Generated command shim contains literal backslash-n text: $shimPath"
+        }
+        if ([Array]::IndexOf($shimBytes, [byte]13) -ge 0) {
+            throw "Generated command shim contains CR bytes instead of LF-only line endings: $shimPath"
+        }
     }
 }
 
