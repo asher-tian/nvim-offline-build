@@ -59,6 +59,9 @@ printf '%s\n' "== Language tool versions =="
 "$ROOT/runtime/tools/bin/shellcheck" --version | sed -n '1,2p'
 printf '%s\n' "module top(input logic clk); endmodule" | "$ROOT/runtime/tools/bin/verible-verilog-format" --stdin_name smoke.sv - >/dev/null
 "$ROOT/runtime/commands/tclint" --version
+printf 'set value 1\n' | "$ROOT/runtime/commands/tclint" -
+printf 'set value 1\n' | "$ROOT/runtime/commands/tclfmt" - >/dev/null
+printf '#!/usr/bin/env bash\necho "$HOME"\n' | "$ROOT/runtime/tools/bin/shellcheck" -s bash -
 
 printf '%s\n' "== Plugin/config smoke test =="
 "$ROOT/nvim" --headless \
