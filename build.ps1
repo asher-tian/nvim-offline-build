@@ -356,7 +356,12 @@ if (-not $npmCacheHit) {
     $cachedNodeModules = Join-Path $npmInstallEntry "node_modules"
     $cacheMarker = Join-Path $npmInstallEntry "cache-key.txt"
 
-    if ((Test-Path $cachedNodeModules) -and (Test-Path $cacheMarker) -and ((Get-Content -LiteralPath $cacheMarker -Raw).Trim() -eq $npmCacheKey)) {
+    $npmEntryAlreadyCached = $false
+    if ((Test-Path $cachedNodeModules) -and (Test-Path $cacheMarker)) {
+        $npmEntryAlreadyCached = ((Get-Content -LiteralPath $cacheMarker -Raw).Trim() -eq $npmCacheKey)
+    }
+
+    if ($npmEntryAlreadyCached) {
         Write-Host "npm dependency cache already contains this exact lock; reusing cached node_modules."
     } else {
         if (Test-Path $npmInstallEntry) {
@@ -518,7 +523,14 @@ foreach ($plugin in $pluginManifest.plugins) {
         }
     } else {
         $remoteUrl = (& git "--git-dir=$pluginCacheRepo" remote get-url origin 2>$null)
-        if ($LASTEXITCODE -ne 0 -or $remoteUrl.Trim() -ne $plugin.repo) {
+        $remoteNeedsUpdate = $false
+        if ($LASTEXITCODE -ne 0) {
+            $remoteNeedsUpdate = $true
+        } elseif ($remoteUrl.Trim() -ne $plugin.repo) {
+            $remoteNeedsUpdate = $true
+        }
+
+        if ($remoteNeedsUpdate) {
             & git "--git-dir=$pluginCacheRepo" remote remove origin 2>$null
             & git "--git-dir=$pluginCacheRepo" remote add origin $plugin.repo
             if ($LASTEXITCODE -ne 0) {
