@@ -59,7 +59,10 @@
       "version": "0.11.0",
       "file": "shellcheck-v0.11.0.linux.x86_64.tar.gz",
       "url": "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.gz",
-      "sha256": "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6"
+      "sha256": "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6",
+      "sourceRepo": "https://github.com/koalaman/shellcheck.git",
+      "sourceRef": "v0.11.0",
+      "sourceCommit": "aac0823e6b58f8a499e856e93738082691cbf212"
     },
     "verible": {
       "version": "v0.0-4300-ga832669d",
