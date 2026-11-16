@@ -1,3 +1,4 @@
+require("plugins.theme")
 require("plugins.ui")
 require("plugins.telescope")
 require("plugins.completion")
