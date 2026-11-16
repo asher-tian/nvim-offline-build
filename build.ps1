@@ -225,6 +225,7 @@ foreach ($plugin in $pluginManifest.plugins) {
     & git -C $destination init
     if ($LASTEXITCODE -ne 0) { throw "git init failed for plugin $($plugin.name)" }
     & git -C $destination config core.autocrlf false
+    & git -C $destination config core.longpaths true
     & git -C $destination remote add origin $plugin.repo
     if ($LASTEXITCODE -ne 0) { throw "git remote add failed for plugin $($plugin.name)" }
 
@@ -282,7 +283,7 @@ Write-Utf8Lf -Path (Join-Path $bundleRoot "manifest/BUILD-INFO.txt") -Content $b
 
 # SHA256SUMS is generated after all payload, runtime, config and manifest files exist.
 $checksumLines = @()
-Get-ChildItem -LiteralPath $bundleRoot -Recurse -File |
+Get-ChildItem -LiteralPath $bundleRoot -Recurse -File -Force |
     Where-Object { $_.FullName -ne (Join-Path $bundleRoot "manifest/SHA256SUMS.txt") } |
     Sort-Object FullName |
     ForEach-Object {
