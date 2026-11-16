@@ -1,17 +1,26 @@
 vim.filetype.add({
     extension = {
         csh = "csh",
+        tcsh = "csh",
         tcl = "tcl",
         tm = "tcl",
         itcl = "tcl",
         tk = "tcl",
-        tcsh = "csh",
+        sdc = "tcl",
+        xdc = "tcl",
+        upf = "tcl",
         icl = "icl",
+        v = "verilog",
+        vh = "verilog",
+        sv = "systemverilog",
+        svh = "systemverilog",
     },
     filename = {
         [".cshrc"] = "csh",
         [".tcshrc"] = "csh",
         [".login"] = "csh",
         [".logout"] = "csh",
+        [".bashrc"] = "sh",
+        [".bash_profile"] = "sh",
     },
 })
