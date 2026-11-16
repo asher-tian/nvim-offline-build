@@ -1,7 +1,9 @@
 #!/bin/sh
 set -eu
 
-ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || true)"
+[ -n "$SCRIPT_PATH" ] || SCRIPT_PATH="$0"
+ROOT="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
 PAYLOAD="$ROOT/payload"
 RUNTIME="$ROOT/runtime"
 TMP="$ROOT/cache/tmp/install-$$"
@@ -95,6 +97,9 @@ fi
 NODE_VERSION="$("$RUNTIME/node/bin/node" --version)"
 [ "$NODE_VERSION" = "v22.23.5" ] || fail "Unexpected Node.js version: $NODE_VERSION"
 
+NPM_VERSION="$(PATH="$RUNTIME/node/bin:$PATH" "$RUNTIME/node/bin/npm" --version)"
+[ "$NPM_VERSION" = "10.9.9" ] || fail "Unexpected npm version: $NPM_VERSION"
+
 NVIM_VERSION="$("$RUNTIME/neovim/bin/nvim" --version | sed -n '1p')"
 case "$NVIM_VERSION" in
     "NVIM v0.12.5"*) ;;
@@ -120,5 +125,6 @@ info "Installation initialized."
 info "Install directory: $ROOT"
 info "Neovim: $NVIM_VERSION"
 info "Node.js: $NODE_VERSION"
+info "npm: $NPM_VERSION"
 info "Run: $ROOT/nvim"
 info "No system PATH or HOME configuration was changed."
