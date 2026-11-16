@@ -53,7 +53,7 @@ do
 done
 
 printf '%s\n' "== Bundled Tcl Python runtime =="
-PYTHONPATH="$ROOT/runtime/python-packages" "$ROOT/runtime/python/bin/python3.11" -c 'import tclint, pygls; print("OK tclint + pygls")'
+LD_LIBRARY_PATH="$ROOT/runtime/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" PYTHONPATH="$ROOT/runtime/python-packages" "$ROOT/runtime/python/bin/python3.11" -c 'import tclint, pygls; print("OK tclint + pygls")'
 
 printf '%s\n' "== Language tool versions =="
 "$ROOT/runtime/tools/bin/shellcheck" --version | sed -n '1,2p'
