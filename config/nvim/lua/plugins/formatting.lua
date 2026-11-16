@@ -1,4 +1,10 @@
 require("conform").setup({
+    formatters = {
+        tclfmt = {
+            command = "tclfmt",
+            args = { "-" },
+        },
+    },
     formatters_by_ft = {
         javascript = { "prettier" },
         javascriptreact = { "prettier" },
@@ -13,6 +19,12 @@ require("conform").setup({
         markdown = { "prettier" },
         bash = { "shfmt" },
         sh = { "shfmt" },
+        tcl = { "tclfmt" },
+        sdc = { "tclfmt" },
+        xdc = { "tclfmt" },
+        upf = { "tclfmt" },
+        verilog = { "verible" },
+        systemverilog = { "verible" },
     },
     format_on_save = {
         timeout_ms = 1500,
