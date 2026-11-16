@@ -13,9 +13,9 @@ if [ -f "$CONF_FILE" ]; then
     if command -v fc-cache >/dev/null 2>&1; then
         fc-cache -f
     fi
-    printf '%s\n' "Removed Maple Mono NF Fontconfig registration."
+    printf '%s\n' "Removed Maple Mono NF CN Fontconfig registration."
 else
-    printf '%s\n' "Maple Mono NF Fontconfig registration was not present."
+    printf '%s\n' "Maple Mono NF CN Fontconfig registration was not present."
 fi
 
 printf '%s\n' "Font files remain in the Neovim bundle."
