@@ -79,7 +79,8 @@ function Write-Utf8Lf {
         New-Item -ItemType Directory -Force -Path $parent | Out-Null
     }
 
-    $normalized = [regex]::Replace($Content, "\r\n?", "\n")
+    # PowerShell does not use C-style \n escapes. Write an actual LF character.
+    $normalized = [regex]::Replace($Content, '\r\n?', [string][char]10)
     [System.IO.File]::WriteAllText(
         $Path,
         $normalized,
