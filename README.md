@@ -108,7 +108,9 @@ nvim/
 ├── nvim                         # 根目录启动入口
 ├── install.sh
 ├── verify.sh
-├── config/nvim/                  # Neovim 配置
+├── config/
+│   ├── nvim/                    # Neovim 配置
+│   └── npmrc                    # 私有 npm 配置
 ├── data/nvim/site/pack/          # 插件
 ├── state/nvim/                  # undo、swap、backup 等状态
 ├── cache/                       # Neovim、Pyright、npm、临时缓存
