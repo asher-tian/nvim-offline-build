@@ -68,12 +68,52 @@ dist/
 
 检查 locks/plugins.lock.json 和 locks/npm/package-lock.json 的差异并提交后，再发布新的离线包。不要在日常构建中使用 -RefreshLocks。
 
-可选参数：
+## 增量构建与缓存
+
+构建缓存保存在仓库根目录的 `cache/`，不会打进 CentOS 离线包，也已经加入 .gitignore：
+
+~~~text
+cache/
+├── downloads/             # Neovim、Node.js、ripgrep、shfmt 原始文件
+├── npm-downloads/         # npm 下载的包缓存
+├── npm-installs/           # 按 package.json / package-lock 锁定的 node_modules
+├── plugin-git/             # 插件 Git 对象缓存
+└── plugin-snapshots/       # 按插件 commit 保存的工作树快照
+
+work/
+├── bundle/                 # 每次重新组装的离线包目录
+└── npm/                    # npm 临时安装目录
+
+dist/                       # 最终 tar.gz
+~~~
+
+普通执行 `.\build.ps1` 时：
+
+- 下载文件存在且 SHA256 正确：直接复用；校验失败才重新下载。
+- npm 的 package.json、package-lock、npm 版本和 linux-x64 目标均未变化：复用完整 node_modules，不再执行 npm 安装。
+- npm 下载缓存独立保留；即使 node_modules 缓存缺失，也优先复用已下载的 npm 包。
+- 插件按锁定 commit 查找快照；命中后不访问 GitHub。快照不存在时才使用本地 Git 对象缓存，必要时才 fetch。
+- 配置、启动脚本、manifest 和最终离线包每次重新组装，确保仓库中的最新修改进入产物。
+
+首次启用增量构建时，脚本会尝试把旧版 `work/bundle/payload`、`work/npm` 和旧离线包中的插件工作树迁移到新缓存目录，避免无条件重新下载和安装。
+
+参数：
 
 ~~~powershell
+# 默认：增量构建，复用 cache/
+.\build.ps1
+
+# 清除 work/ 和 cache/，重新下载、安装和构建；保留锁文件及 dist/
 .\build.ps1 -Clean
+
+# 主动更新插件分支和 npm 依赖锁文件；仍复用已有下载缓存
+.\build.ps1 -RefreshLocks
+
+# 指定最终产物目录
 .\build.ps1 -OutputDirectory D:\Artifacts
 ~~~
+
+`-Clean` 与 `-RefreshLocks` 可以组合使用。正常修改 Lua 配置、Shell 脚本或构建模板时，不需要使用这两个参数。
 
 ## CentOS 7 部署
 
