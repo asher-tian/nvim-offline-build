@@ -499,6 +499,17 @@ foreach ($plugin in $pluginManifest.plugins) {
         }
     }
 
+    # Give the bare cache a stable HEAD so a local --shared clone can
+    # materialize commits fetched through FETCH_HEAD or by raw commit SHA.
+    & git "--git-dir=$pluginCacheRepo" update-ref refs/heads/offline-cache $commit
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not update local cache ref for plugin $($plugin.name) at $commit"
+    }
+    & git "--git-dir=$pluginCacheRepo" symbolic-ref HEAD refs/heads/offline-cache
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not set local cache HEAD for plugin $($plugin.name)"
+    }
+
     # A refreshed branch may resolve to a snapshot already present in cache.
     $snapshotPath = Join-Path $snapshotParent $commit
     $snapshotMarker = "$snapshotPath.complete"
