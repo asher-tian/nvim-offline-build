@@ -56,6 +56,10 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'setfiletype tcl' \
     -c 'lua assert(vim.bo.filetype == "tcl")' \
     -c 'lua assert(vim.bo.commentstring == "# %s")' \
+    -c 'syntax on' \
+    -c 'setfiletype icl' \
+    -c 'lua assert(vim.bo.filetype == "icl")' \
+    -c 'lua assert(vim.b.current_syntax == "icl")' \
     -c 'lua print("config=" .. vim.fn.stdpath("config"))' \
     -c 'lua print("data=" .. vim.fn.stdpath("data"))' \
     -c 'lua print("state=" .. vim.fn.stdpath("state"))' \
