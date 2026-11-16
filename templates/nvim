@@ -17,6 +17,6 @@ export NPM_CONFIG_CACHE="$ROOT/cache/npm"
 export NPM_CONFIG_USERCONFIG="$ROOT/config/npmrc"
 export NPM_CONFIG_PREFIX="$ROOT/runtime/npm-global"
 
-export PATH="$ROOT/runtime/commands:$ROOT/runtime/tools/bin:$ROOT/runtime/node/bin:$PATH"
+export PATH="$ROOT/runtime/commands:$ROOT/runtime/tools/bin:$ROOT/runtime/node/bin:$ROOT/runtime/python/bin:$PATH"
 
 exec "$ROOT/runtime/neovim/bin/nvim" "$@"
