@@ -92,36 +92,44 @@ if ((-not $Clean) -and (Test-Path $workRoot)) {
     $legacyNpmRoot = Join-Path $workRoot "npm"
     $legacyNodeModules = Join-Path $legacyNpmRoot "node_modules"
     $legacyPackageJson = Join-Path $repoRoot "package.json"
+    $legacyPackageJsonInWork = Join-Path $legacyNpmRoot "package.json"
     $legacyLockSource = Join-Path $repoRoot "locks/npm/package-lock.json"
     $legacyLockInWork = Join-Path $legacyNpmRoot "package-lock.json"
 
-    if ((Test-Path $legacyNodeModules) -and ((Test-Path $legacyLockSource) -or (Test-Path $legacyLockInWork))) {
+    if ((Test-Path $legacyNodeModules) -and (Test-Path $legacyPackageJsonInWork) -and (Test-Path $legacyLockInWork)) {
         if (-not (Test-Path $legacyLockSource)) {
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $legacyLockSource) | Out-Null
             Copy-Item -LiteralPath $legacyLockInWork -Destination $legacyLockSource -Force
         }
 
-        $legacyPackageHash = (Get-FileHash -LiteralPath $legacyPackageJson -Algorithm SHA256).Hash.ToLowerInvariant()
-        $legacyLockHash = (Get-FileHash -LiteralPath $legacyLockSource -Algorithm SHA256).Hash.ToLowerInvariant()
-        $legacyNpmKey = Get-TextSha256 -Text ($legacyPackageHash + "|" + $legacyLockHash + "|" + $npmActual + "|linux-x64")
-        $legacyNpmEntry = Join-Path $npmInstallCache $legacyNpmKey
-        $legacyNpmMarker = Join-Path $legacyNpmEntry "cache-key.txt"
+        $oldPackageHash = (Get-FileHash -LiteralPath $legacyPackageJsonInWork -Algorithm SHA256).Hash.ToLowerInvariant()
+        $currentPackageHash = (Get-FileHash -LiteralPath $legacyPackageJson -Algorithm SHA256).Hash.ToLowerInvariant()
+        $oldLockHash = (Get-FileHash -LiteralPath $legacyLockInWork -Algorithm SHA256).Hash.ToLowerInvariant()
+        $currentLockHash = (Get-FileHash -LiteralPath $legacyLockSource -Algorithm SHA256).Hash.ToLowerInvariant()
 
-        if (-not (Test-Path $legacyNpmMarker)) {
-            if (Test-Path $legacyNpmEntry) {
-                Remove-Item -LiteralPath $legacyNpmEntry -Recurse -Force
+        if (($oldPackageHash -eq $currentPackageHash) -and ($oldLockHash -eq $currentLockHash)) {
+            $legacyNpmKey = Get-TextSha256 -Text ($currentPackageHash + "|" + $currentLockHash + "|" + $npmActual + "|linux-x64")
+            $legacyNpmEntry = Join-Path $npmInstallCache $legacyNpmKey
+            $legacyNpmMarker = Join-Path $legacyNpmEntry "cache-key.txt"
+
+            if (-not (Test-Path $legacyNpmMarker)) {
+                if (Test-Path $legacyNpmEntry) {
+                    Remove-Item -LiteralPath $legacyNpmEntry -Recurse -Force
+                }
+                New-Item -ItemType Directory -Force -Path $legacyNpmEntry | Out-Null
+                Copy-Item -LiteralPath $legacyNodeModules -Destination $legacyNpmEntry -Recurse -Force
+                Write-Utf8Lf -Path $legacyNpmMarker -Content $legacyNpmKey
+                Write-Host "Migrated previous npm node_modules into cache: $legacyNpmKey"
             }
-            New-Item -ItemType Directory -Force -Path $legacyNpmEntry | Out-Null
-            Copy-Item -LiteralPath $legacyNodeModules -Destination $legacyNpmEntry -Recurse -Force
-            Write-Utf8Lf -Path $legacyNpmMarker -Content $legacyNpmKey
-            Write-Host "Migrated previous npm node_modules into cache: $legacyNpmKey"
+        } else {
+            Write-Host "Skipped legacy npm migration because package.json or package-lock.json changed."
         }
     }
 
     # Previous bundles already contained plugin trees checked out at the
     # commits recorded in locks/plugins.lock.json. Preserve them as snapshots.
     $legacyPluginRoot = Join-Path $workRoot "bundle/data/nvim/site/pack/offline/start"
-    $legacyPluginLock = Join-Path $repoRoot "locks/plugins.lock.json"
+    $legacyPluginLock = Join-Path $workRoot "bundle/manifest/plugins.lock.json"
     if ((Test-Path $legacyPluginRoot) -and (Test-Path $legacyPluginLock)) {
         $legacyPluginEntries = (Get-Content -LiteralPath $legacyPluginLock -Raw | ConvertFrom-Json).plugins
         foreach ($legacyPlugin in $legacyPluginEntries) {
