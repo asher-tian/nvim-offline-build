@@ -35,27 +35,49 @@ if ($npmActual -ne $npmExpected) {
     throw "Windows build npm must be $npmExpected; current version is $npmActual."
 }
 
-Write-Host ""
-Write-Host "Building CentOS 7 x86_64 Neovim offline bundle"
-Write-Host "Builder Node: $nodeActual / npm $npmActual"
-Write-Host "Target Node: $($versions.runtime.node.version)"
-Write-Host ""
-
 $repoRoot = $PSScriptRoot
 $workRoot = Join-Path $repoRoot "work"
 $bundleRoot = Join-Path $workRoot "bundle"
 $npmWork = Join-Path $workRoot "npm"
 $payloadRoot = Join-Path $bundleRoot "payload"
 
-if ($Clean -and (Test-Path $workRoot)) {
+# Persistent caches are deliberately outside work/. A normal build recreates
+# the bundle but keeps downloads, npm packages and Git objects for reuse.
+$cacheRoot = Join-Path $repoRoot "cache"
+$downloadCache = Join-Path $cacheRoot "downloads"
+$npmDownloadCache = Join-Path $cacheRoot "npm-downloads"
+$npmInstallCache = Join-Path $cacheRoot "npm-installs"
+$pluginCacheRoot = Join-Path $cacheRoot "plugins"
+
+if ($Clean) {
+    if (Test-Path $workRoot) {
+        Remove-Item -LiteralPath $workRoot -Recurse -Force
+    }
+    if (Test-Path $cacheRoot) {
+        Remove-Item -LiteralPath $cacheRoot -Recurse -Force
+    }
+}
+
+# work/ is disposable. It is rebuilt every time; cache/ is not.
+if (Test-Path $workRoot) {
     Remove-Item -LiteralPath $workRoot -Recurse -Force
 }
-if (Test-Path $bundleRoot) {
-    Remove-Item -LiteralPath $bundleRoot -Recurse -Force
+
+foreach ($directory in @($downloadCache, $npmDownloadCache, $npmInstallCache, $pluginCacheRoot, $bundleRoot)) {
+    New-Item -ItemType Directory -Force -Path $directory | Out-Null
 }
-if (Test-Path $npmWork) {
-    Remove-Item -LiteralPath $npmWork -Recurse -Force
+
+Write-Host ""
+Write-Host "Building CentOS 7 x86_64 Neovim offline bundle"
+Write-Host "Builder Node: $nodeActual / npm $npmActual"
+Write-Host "Target Node: $($versions.runtime.node.version)"
+Write-Host "Persistent cache: $cacheRoot"
+if ($Clean) {
+    Write-Host "Cache mode: clean rebuild"
+} else {
+    Write-Host "Cache mode: reuse verified downloads and dependencies"
 }
+Write-Host ""
 
 $directories = @(
     "config",
@@ -85,68 +107,129 @@ Copy-Item -Path (Join-Path $repoRoot "templates/install.sh") -Destination (Join-
 Copy-Item -Path (Join-Path $repoRoot "templates/verify.sh") -Destination (Join-Path $bundleRoot "verify.sh") -Force
 Copy-Item -Path (Join-Path $repoRoot "templates/npmrc") -Destination (Join-Path $bundleRoot "config/npmrc") -Force
 
-# 1. Download target Linux binaries. Keep their original archives intact on Windows.
+# 1. Download Linux runtime archives into the persistent cache.
+# Existing files are reused only when their expected SHA256 matches.
 $nvim = $versions.runtime.neovim
-$nvimArchive = Join-Path $payloadRoot $nvim.file
-Invoke-Download -Url $nvim.url -Destination $nvimArchive
-Assert-Sha256 -Path $nvimArchive -Expected $nvim.sha256
+$nvimCached = Join-Path $downloadCache $nvim.file
+Invoke-Download -Url $nvim.url -Destination $nvimCached -ExpectedSha256 $nvim.sha256
+Assert-Sha256 -Path $nvimCached -Expected $nvim.sha256
+Copy-Item -LiteralPath $nvimCached -Destination (Join-Path $payloadRoot $nvim.file) -Force
 
 $node = $versions.runtime.node
-$nodeArchive = Join-Path $payloadRoot $node.file
-$nodeChecksums = Join-Path $payloadRoot "node-SHASUMS256.txt"
-Invoke-Download -Url $node.url -Destination $nodeArchive
-Invoke-Download -Url $node.checksumUrl -Destination $nodeChecksums
-$nodeSha = Get-ChecksumFromFile -ChecksumFile $nodeChecksums -AssetName $node.file
-Assert-Sha256 -Path $nodeArchive -Expected $nodeSha
+$nodeChecksumsCached = Join-Path $downloadCache ("node-" + $node.version + "-SHASUMS256.txt")
+Invoke-Download -Url $node.checksumUrl -Destination $nodeChecksumsCached
+$nodeSha = Get-ChecksumFromFile -ChecksumFile $nodeChecksumsCached -AssetName $node.file
+$nodeCached = Join-Path $downloadCache $node.file
+Invoke-Download -Url $node.url -Destination $nodeCached -ExpectedSha256 $nodeSha
+Assert-Sha256 -Path $nodeCached -Expected $nodeSha
+Copy-Item -LiteralPath $nodeCached -Destination (Join-Path $payloadRoot $node.file) -Force
+Copy-Item -LiteralPath $nodeChecksumsCached -Destination (Join-Path $payloadRoot "node-SHASUMS256.txt") -Force
 
-# 2. Download portable Linux command-line tools used by the IDE.
+# 2. Cache portable Linux command-line tools.
 $rg = $versions.tools.ripgrep
-$rgArchive = Join-Path $payloadRoot $rg.file
-Invoke-Download -Url $rg.url -Destination $rgArchive
-Assert-Sha256 -Path $rgArchive -Expected $rg.sha256
+$rgCached = Join-Path $downloadCache $rg.file
+Invoke-Download -Url $rg.url -Destination $rgCached -ExpectedSha256 $rg.sha256
+Assert-Sha256 -Path $rgCached -Expected $rg.sha256
+Copy-Item -LiteralPath $rgCached -Destination (Join-Path $payloadRoot $rg.file) -Force
 
 $shfmt = $versions.tools.shfmt
-$shfmtBinary = Join-Path $payloadRoot $shfmt.file
-$shfmtChecksums = Join-Path $payloadRoot "shfmt-sha256sums.txt"
-Invoke-Download -Url $shfmt.url -Destination $shfmtBinary
-Invoke-Download -Url $shfmt.checksumUrl -Destination $shfmtChecksums
-$shfmtSha = Get-ChecksumFromFile -ChecksumFile $shfmtChecksums -AssetName $shfmt.file
-Assert-Sha256 -Path $shfmtBinary -Expected $shfmtSha
+$shfmtChecksumsCached = Join-Path $downloadCache ("shfmt-" + $shfmt.version + "-sha256sums.txt")
+Invoke-Download -Url $shfmt.checksumUrl -Destination $shfmtChecksumsCached
+$shfmtSha = Get-ChecksumFromFile -ChecksumFile $shfmtChecksumsCached -AssetName $shfmt.file
+$shfmtCached = Join-Path $downloadCache $shfmt.file
+Invoke-Download -Url $shfmt.url -Destination $shfmtCached -ExpectedSha256 $shfmtSha
+Assert-Sha256 -Path $shfmtCached -Expected $shfmtSha
+Copy-Item -LiteralPath $shfmtCached -Destination (Join-Path $payloadRoot $shfmt.file) -Force
+Copy-Item -LiteralPath $shfmtChecksumsCached -Destination (Join-Path $payloadRoot "shfmt-sha256sums.txt") -Force
 
-# 3. Install JavaScript LSP packages on Windows for the Linux target platform.
-# These packages are JavaScript; Node itself is supplied by the Linux Node archive.
-Copy-Item -LiteralPath (Join-Path $repoRoot "package.json") -Destination (Join-Path $npmWork "package.json") -Force
+# 3. Prepare Linux-targeted npm dependencies.
+# The npm download cache stores tarballs; npm-install cache stores a complete
+# node_modules tree keyed by package.json + package-lock + npm + target platform.
+$packageJsonSource = Join-Path $repoRoot "package.json"
 $npmLockSource = Join-Path $repoRoot "locks/npm/package-lock.json"
 $npmLockDestination = Join-Path $npmWork "package-lock.json"
+$npmPackageDestination = Join-Path $npmWork "package.json"
 
-Push-Location $npmWork
-try {
-    if ((Test-Path $npmLockSource) -and (-not $RefreshLocks)) {
-        Copy-Item -LiteralPath $npmLockSource -Destination $npmLockDestination -Force
-        & npm ci --os=linux --cpu=x64 --no-bin-links --no-audit --no-fund --ignore-scripts
-    } else {
-        & npm install --save-exact --os=linux --cpu=x64 --no-bin-links --no-audit --no-fund --ignore-scripts
-    }
+Copy-Item -LiteralPath $packageJsonSource -Destination $npmPackageDestination -Force
 
-    if ($LASTEXITCODE -ne 0) {
-        throw "npm dependency installation failed with exit code $LASTEXITCODE"
-    }
-} finally {
-    Pop-Location
+$useExistingLock = (Test-Path $npmLockSource) -and (-not $RefreshLocks)
+if ($useExistingLock) {
+    Copy-Item -LiteralPath $npmLockSource -Destination $npmLockDestination -Force
 }
 
-New-Item -ItemType Directory -Force -Path (Join-Path $repoRoot "locks/npm") | Out-Null
-Copy-Item -LiteralPath $npmLockDestination -Destination $npmLockSource -Force
-Copy-Item -LiteralPath (Join-Path $npmWork "package.json") -Destination (Join-Path $bundleRoot "runtime/npm/package.json") -Force
-Copy-Item -LiteralPath $npmLockDestination -Destination (Join-Path $bundleRoot "runtime/npm/package-lock.json") -Force
-$bundleNodeModules = Join-Path $bundleRoot "runtime/npm/node_modules"
-New-Item -ItemType Directory -Force -Path $bundleNodeModules | Out-Null
-Copy-Item -Path (Join-Path $npmWork "node_modules/*") -Destination $bundleNodeModules -Recurse -Force
+$npmInstallEntry = $null
+$npmCacheHit = $false
 
-# Generate POSIX command shims from the installed npm packages' bin metadata.
-$nodeModules = Join-Path $npmWork "node_modules"
-$npmManifest = Get-Content (Join-Path $npmWork "package.json") -Raw | ConvertFrom-Json
-foreach ($dependency in $npmManifest.dependencies.PSObject.Properties) {
+if ($useExistingLock) {
+    $packageHash = (Get-FileHash -LiteralPath $npmPackageDestination -Algorithm SHA256).Hash.ToLowerInvariant()
+    $lockHash = (Get-FileHash -LiteralPath $npmLockDestination -Algorithm SHA256).Hash.ToLowerInvariant()
+    $npmCacheKey = Get-TextSha256 -Text ($packageHash + "|" + $lockHash + "|" + $npmActual + "|linux-x64")
+    $npmInstallEntry = Join-Path $npmInstallCache $npmCacheKey
+    $cachedNodeModules = Join-Path $npmInstallEntry "node_modules"
+    $cacheMarker = Join-Path $npmInstallEntry "cache-key.txt"
+
+    if ((Test-Path $cachedNodeModules) -and (Test-Path $cacheMarker)) {
+        $markerValue = (Get-Content -LiteralPath $cacheMarker -Raw).Trim()
+        if ($markerValue -eq $npmCacheKey) {
+            $npmCacheHit = $true
+            Write-Host "npm dependency cache hit: $npmCacheKey"
+        }
+    }
+}
+
+if (-not $npmCacheHit) {
+    Push-Location $npmWork
+    try {
+        if ($useExistingLock) {
+            Write-Host "Installing npm dependencies from package-lock.json (using persistent npm download cache)."
+            & npm ci --os=linux --cpu=x64 --no-bin-links --no-audit --no-fund --ignore-scripts --cache $npmDownloadCache --prefer-offline
+        } else {
+            Write-Host "Resolving npm dependencies and updating package-lock.json."
+            & npm install --save-exact --os=linux --cpu=x64 --no-bin-links --no-audit --no-fund --ignore-scripts --cache $npmDownloadCache --prefer-offline
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "npm dependency installation failed with exit code $LASTEXITCODE"
+        }
+    } finally {
+        Pop-Location
+    }
+
+    if (-not (Test-Path $npmLockDestination)) {
+        throw "npm did not generate package-lock.json."
+    }
+
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $npmLockSource) | Out-Null
+    Copy-Item -LiteralPath $npmLockDestination -Destination $npmLockSource -Force
+
+    $packageHash = (Get-FileHash -LiteralPath $npmPackageDestination -Algorithm SHA256).Hash.ToLowerInvariant()
+    $lockHash = (Get-FileHash -LiteralPath $npmLockDestination -Algorithm SHA256).Hash.ToLowerInvariant()
+    $npmCacheKey = Get-TextSha256 -Text ($packageHash + "|" + $lockHash + "|" + $npmActual + "|linux-x64")
+    $npmInstallEntry = Join-Path $npmInstallCache $npmCacheKey
+    $cachedNodeModules = Join-Path $npmInstallEntry "node_modules"
+    $cacheMarker = Join-Path $npmInstallEntry "cache-key.txt"
+
+    if ((Test-Path $cachedNodeModules) -and (Test-Path $cacheMarker) -and ((Get-Content -LiteralPath $cacheMarker -Raw).Trim() -eq $npmCacheKey)) {
+        Write-Host "npm dependency cache already contains this exact lock; reusing cached node_modules."
+    } else {
+        if (Test-Path $npmInstallEntry) {
+            Remove-Item -LiteralPath $npmInstallEntry -Recurse -Force
+        }
+        New-Item -ItemType Directory -Force -Path $npmInstallEntry | Out-Null
+        Copy-Item -LiteralPath (Join-Path $npmWork "node_modules") -Destination $npmInstallEntry -Recurse -Force
+        Write-Utf8Lf -Path $cacheMarker -Content $npmCacheKey
+        Write-Host "Saved npm dependency cache: $npmCacheKey"
+    }
+}
+
+Copy-Item -LiteralPath $npmPackageDestination -Destination (Join-Path $bundleRoot "runtime/npm/package.json") -Force
+Copy-Item -LiteralPath $npmLockDestination -Destination (Join-Path $bundleRoot "runtime/npm/package-lock.json") -Force
+$bundleNpmRoot = Join-Path $bundleRoot "runtime/npm"
+Copy-Item -LiteralPath (Join-Path $npmInstallEntry "node_modules") -Destination $bundleNpmRoot -Recurse -Force
+$nodeModules = Join-Path $npmInstallEntry "node_modules"
+
+# Generate POSIX command shims from npm package bin metadata.
+foreach ($dependency in $((Get-Content -LiteralPath $npmPackageDestination -Raw | ConvertFrom-Json).dependencies.PSObject.Properties)) {
     $packageName = $dependency.Name
     $packagePath = Join-Path $nodeModules ($packageName -replace "/", "\")
     $packageJsonPath = Join-Path $packagePath "package.json"
@@ -155,7 +238,7 @@ foreach ($dependency in $npmManifest.dependencies.PSObject.Properties) {
         throw "Installed npm package metadata is missing: $packageName"
     }
 
-    $packageMetadata = Get-Content $packageJsonPath -Raw | ConvertFrom-Json
+    $packageMetadata = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
     if (-not $packageMetadata.bin) {
         continue
     }
@@ -195,10 +278,10 @@ exec "$ROOT/runtime/node/bin/node" "$ROOT/runtime/npm/node_modules/__PACKAGE__/_
         $shim = $shim.Replace("__PACKAGE__", $packageRelative).Replace("__TARGET__", $target)
         Write-Utf8Lf -Path $shimPath -Content $shim
 
-        # Validate the generated POSIX script has real LF line endings and no CR bytes.
+        # Fail the build if Windows text handling ever corrupts a POSIX shim.
         $shimText = [System.IO.File]::ReadAllText($shimPath)
         $shimBytes = [System.IO.File]::ReadAllBytes($shimPath)
-        if (-not $shimText.StartsWith("#!/bin/sh`n", [System.StringComparison]::Ordinal)) {
+        if (-not $shimText.StartsWith(("#!/bin/sh" + [char]10), [System.StringComparison]::Ordinal)) {
             throw "Generated command shim has an invalid shebang or missing LF newline: $shimPath"
         }
         if ($shimText.Contains('\n')) {
@@ -207,12 +290,13 @@ exec "$ROOT/runtime/node/bin/node" "$ROOT/runtime/npm/node_modules/__PACKAGE__/_
         if ([Array]::IndexOf($shimBytes, [byte]13) -ge 0) {
             throw "Generated command shim contains CR bytes instead of LF-only line endings: $shimPath"
         }
+        if ($shimBytes.Length -ge 3 -and $shimBytes[0] -eq 239 -and $shimBytes[1] -eq 187 -and $shimBytes[2] -eq 191) {
+            throw "Generated command shim must not contain a UTF-8 BOM: $shimPath"
+        }
     }
 }
 
-# 4. Fetch plugins from the committed lock file.
-# If a lock entry is absent, resolve the configured branch and record its commit.
-# -RefreshLocks intentionally resolves the current branch heads again.
+# 4. Materialize plugins from persistent bare Git caches.
 $pluginManifest = Get-Content (Join-Path $repoRoot "plugins.json") -Raw | ConvertFrom-Json
 $pluginLockPath = Join-Path $repoRoot "locks/plugins.lock.json"
 $oldPluginLock = $null
@@ -222,6 +306,7 @@ if ((Test-Path $pluginLockPath) -and (-not $RefreshLocks)) {
 }
 
 $pluginRoot = Join-Path $bundleRoot "data/nvim/site/pack/offline/start"
+New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
 $resolvedPlugins = @()
 
 foreach ($plugin in $pluginManifest.plugins) {
@@ -232,34 +317,87 @@ foreach ($plugin in $pluginManifest.plugins) {
             Select-Object -First 1
     }
 
-    $destination = Join-Path $pluginRoot $plugin.name
-    New-Item -ItemType Directory -Force -Path $destination | Out-Null
+    $cacheName = ([string]$plugin.name) + ".git"
+    $pluginCacheRepo = Join-Path $pluginCacheRoot $cacheName
 
-    & git -C $destination init
-    if ($LASTEXITCODE -ne 0) { throw "git init failed for plugin $($plugin.name)" }
-    & git -C $destination config core.autocrlf false
-    & git -C $destination config core.longpaths true
-    & git -C $destination remote add origin $plugin.repo
-    if ($LASTEXITCODE -ne 0) { throw "git remote add failed for plugin $($plugin.name)" }
+    if (-not (Test-Path (Join-Path $pluginCacheRepo "HEAD"))) {
+        if (Test-Path $pluginCacheRepo) {
+            Remove-Item -LiteralPath $pluginCacheRepo -Recurse -Force
+        }
+        & git init --bare $pluginCacheRepo
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not initialize plugin cache for $($plugin.name)"
+        }
+        & git "--git-dir=$pluginCacheRepo" config core.longpaths true
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not configure plugin cache for $($plugin.name)"
+        }
+        & git "--git-dir=$pluginCacheRepo" remote add origin $plugin.repo
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not configure plugin remote for $($plugin.name)"
+        }
+    } else {
+        $remoteUrl = (& git "--git-dir=$pluginCacheRepo" remote get-url origin 2>$null)
+        if ($LASTEXITCODE -ne 0 -or $remoteUrl.Trim() -ne $plugin.repo) {
+            & git "--git-dir=$pluginCacheRepo" remote remove origin 2>$null
+            & git "--git-dir=$pluginCacheRepo" remote add origin $plugin.repo
+            if ($LASTEXITCODE -ne 0) {
+                throw "Could not update plugin remote for $($plugin.name)"
+            }
+        }
+    }
 
-    if ($lockedPlugin -and $lockedPlugin.commit) {
-        $fetchRef = [string]$lockedPlugin.commit
+    $commit = $null
+    $mustFetchBranch = $RefreshLocks -or (-not $lockedPlugin) -or (-not $lockedPlugin.commit)
+
+    if (-not $mustFetchBranch) {
+        $lockedCommit = [string]$lockedPlugin.commit
+        & git "--git-dir=$pluginCacheRepo" cat-file -e "$lockedCommit^{commit}" 2>$null
+        $commitCached = ($LASTEXITCODE -eq 0)
+
+        if ($commitCached) {
+            $commit = $lockedCommit
+            Write-Host "Plugin cache hit: $($plugin.name) [$commit]"
+        } else {
+            Write-Host "Plugin cache miss: $($plugin.name) [$lockedCommit]"
+            & git "--git-dir=$pluginCacheRepo" fetch --depth 1 origin $lockedCommit
+            if ($LASTEXITCODE -ne 0) {
+                throw "git fetch failed for plugin $($plugin.name), commit $lockedCommit"
+            }
+            $commit = (& git "--git-dir=$pluginCacheRepo" rev-parse "FETCH_HEAD^{commit}").Trim()
+            if ($commit -ne $lockedCommit) {
+                throw "Plugin lock mismatch for $($plugin.name): expected $lockedCommit, got $commit"
+            }
+        }
     } else {
         $fetchRef = "refs/heads/$($plugin.ref)"
+        Write-Host "Fetching plugin branch: $($plugin.name) [$fetchRef]"
+        & git "--git-dir=$pluginCacheRepo" fetch --depth 1 origin $fetchRef
+        if ($LASTEXITCODE -ne 0) {
+            throw "git fetch failed for plugin $($plugin.name), ref $fetchRef"
+        }
+        $commit = (& git "--git-dir=$pluginCacheRepo" rev-parse "FETCH_HEAD^{commit}").Trim()
     }
 
-    Write-Host "Plugin: $($plugin.name) [$fetchRef]"
-    & git -C $destination fetch --depth 1 origin $fetchRef
+    $destination = Join-Path $pluginRoot $plugin.name
+    if (Test-Path $destination) {
+        Remove-Item -LiteralPath $destination -Recurse -Force
+    }
+
+    & git clone --shared --no-checkout $pluginCacheRepo $destination
     if ($LASTEXITCODE -ne 0) {
-        throw "git fetch failed for plugin $($plugin.name), ref $fetchRef"
+        throw "Could not materialize cached plugin $($plugin.name)"
+    }
+    & git -C $destination config core.autocrlf false
+    & git -C $destination config core.longpaths true
+    & git -C $destination checkout --detach $commit
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not checkout plugin $($plugin.name) at $commit"
     }
 
-    & git -C $destination checkout --detach FETCH_HEAD
-    if ($LASTEXITCODE -ne 0) { throw "git checkout failed for plugin $($plugin.name)" }
-
-    $commit = (& git -C $destination rev-parse HEAD).Trim()
-    if ($lockedPlugin -and $lockedPlugin.commit -and $commit -ne $lockedPlugin.commit) {
-        throw "Plugin lock mismatch for $($plugin.name): expected $($lockedPlugin.commit), got $commit"
+    $checkedOutCommit = (& git -C $destination rev-parse HEAD).Trim()
+    if ($checkedOutCommit -ne $commit) {
+        throw "Plugin checkout mismatch for $($plugin.name): expected $commit, got $checkedOutCommit"
     }
 
     Remove-Item -LiteralPath (Join-Path $destination ".git") -Recurse -Force
@@ -332,6 +470,8 @@ Write-Host ""
 Write-Host "Build completed."
 Write-Host "Archive: $archivePath"
 Write-Host "Size: $archiveSize MB"
+Write-Host "Persistent cache: $cacheRoot"
 Write-Host ""
-Write-Host "First build creates locks/npm/package-lock.json."
-Write-Host "Commit the npm lock file; plugin commits are already pinned in locks/plugins.lock.json."
+Write-Host "Normal builds reuse verified downloads, npm node_modules and pinned plugin commits."
+Write-Host "Use -Clean only to discard all build caches and rebuild from scratch."
+Write-Host "Use -RefreshLocks only when intentionally updating npm and plugin versions."
