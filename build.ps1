@@ -106,8 +106,18 @@ if ((-not $Clean) -and (Test-Path $workRoot)) {
         $currentPackageHash = (Get-FileHash -LiteralPath $legacyPackageJson -Algorithm SHA256).Hash.ToLowerInvariant()
         $oldLockHash = (Get-FileHash -LiteralPath $legacyLockInWork -Algorithm SHA256).Hash.ToLowerInvariant()
         $currentLockHash = (Get-FileHash -LiteralPath $legacyLockSource -Algorithm SHA256).Hash.ToLowerInvariant()
+        $legacyDependenciesPresent = $true
+        $legacyManifest = Get-Content -LiteralPath $legacyPackageJsonInWork -Raw | ConvertFrom-Json
 
-        if (($oldPackageHash -eq $currentPackageHash) -and ($oldLockHash -eq $currentLockHash)) {
+        foreach ($legacyDependency in $legacyManifest.dependencies.PSObject.Properties) {
+            $legacyDependencyPath = Join-Path $legacyNodeModules ($legacyDependency.Name -replace "/", "\")
+            if (-not (Test-Path (Join-Path $legacyDependencyPath "package.json"))) {
+                $legacyDependenciesPresent = $false
+                break
+            }
+        }
+
+        if (($oldPackageHash -eq $currentPackageHash) -and ($oldLockHash -eq $currentLockHash) -and $legacyDependenciesPresent) {
             $legacyNpmKey = Get-TextSha256 -Text ($currentPackageHash + "|" + $currentLockHash + "|" + $npmActual + "|linux-x64")
             $legacyNpmEntry = Join-Path $npmInstallCache $legacyNpmKey
             $legacyNpmMarker = Join-Path $legacyNpmEntry "cache-key.txt"
@@ -122,7 +132,7 @@ if ((-not $Clean) -and (Test-Path $workRoot)) {
                 Write-Host "Migrated previous npm node_modules into cache: $legacyNpmKey"
             }
         } else {
-            Write-Host "Skipped legacy npm migration because package.json or package-lock.json changed."
+            Write-Host "Skipped legacy npm migration because package files changed or a direct dependency is missing."
         }
     }
 
