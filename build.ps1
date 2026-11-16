@@ -678,6 +678,7 @@ Copy-Item -LiteralPath $pluginLockPath -Destination (Join-Path $bundleRoot "mani
 Copy-Item -LiteralPath $npmLockSource -Destination (Join-Path $bundleRoot "manifest/npm-package-lock.json") -Force
 $pythonLockSource = Join-Path $repoRoot "locks/python/tclint-requirements.txt"
 Copy-Item -LiteralPath $pythonLockSource -Destination (Join-Path $bundleRoot "manifest/tclint-python-requirements.txt") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "requirements/tclint.in") -Destination (Join-Path $bundleRoot "manifest/tclint-requirements.in") -Force
 
 $buildInfo = @"
 Target: CentOS 7 x86_64
