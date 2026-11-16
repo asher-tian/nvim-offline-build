@@ -276,7 +276,11 @@ if (-not $npmCacheHit) {
             & npm ci --os=linux --cpu=x64 --no-bin-links --no-audit --no-fund --ignore-scripts --cache $npmDownloadCache --prefer-offline
         } else {
             Write-Host "Resolving npm dependencies and updating package-lock.json."
-            & npm install --save-exact --os=linux --cpu=x64 --no-bin-links --no-audit --no-fund --ignore-scripts --cache $npmDownloadCache --prefer-offline
+            $npmRefreshPreference = "--prefer-offline"
+            if ($RefreshLocks) {
+                $npmRefreshPreference = "--prefer-online"
+            }
+            & npm install --save-exact --os=linux --cpu=x64 --no-bin-links --no-audit --no-fund --ignore-scripts --cache $npmDownloadCache $npmRefreshPreference
         }
 
         if ($LASTEXITCODE -ne 0) {
