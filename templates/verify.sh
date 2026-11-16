@@ -71,6 +71,10 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'lua assert(require("conform"))' \
     -c 'lua assert(require("lualine"))' \
     -c 'lua assert(require("catppuccin"))' \
+    -c 'lua assert(vim.filetype.match({filename = "sample.icl"}) == "icl")' \
+    -c 'lua assert(vim.filetype.match({filename = "sample.sdc"}) == "tcl")' \
+    -c 'lua assert(vim.filetype.match({filename = "sample.csh"}) == "csh")' \
+    -c 'lua assert(vim.filetype.match({filename = "sample.sv"}) == "systemverilog")' \
     -c 'setfiletype tcl' \
     -c 'lua assert(vim.bo.filetype == "tcl")' \
     -c 'lua assert(vim.bo.commentstring == "# %s")' \
