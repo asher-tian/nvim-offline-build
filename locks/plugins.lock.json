@@ -1,25 +1,131 @@
 {
   "schemaVersion": 1,
   "plugins": [
-    { "name": "nvim-lspconfig", "repo": "https://github.com/neovim/nvim-lspconfig.git", "ref": "master", "commit": "6e72b89d499455611f09f46d13ee9f79325406e5" },
-    { "name": "nvim-cmp", "repo": "https://github.com/hrsh7th/nvim-cmp.git", "ref": "main", "commit": "fe29aba4117227a6df637bc41e4b4fb4e98864a0" },
-    { "name": "cmp-nvim-lsp", "repo": "https://github.com/hrsh7th/cmp-nvim-lsp.git", "ref": "main", "commit": "cd4ee08a988deb47ac3726f418fb27fe1a95729d" },
-    { "name": "cmp-buffer", "repo": "https://github.com/hrsh7th/cmp-buffer.git", "ref": "main", "commit": "b74fab3656eea9de20a9b8116afa3cfc4ec09657" },
-    { "name": "cmp-path", "repo": "https://github.com/hrsh7th/cmp-path.git", "ref": "main", "commit": "c642487086dbd9a93160e1679a1327be111cbc25" },
-    { "name": "cmp-cmdline", "repo": "https://github.com/hrsh7th/cmp-cmdline.git", "ref": "main", "commit": "d126061b624e0af6c3a556428712dd4d4194ec6d" },
-    { "name": "LuaSnip", "repo": "https://github.com/L3MON4D3/LuaSnip.git", "ref": "master", "commit": "0abc8f390b278c3b4aabc4c004ac8a088b65cf24" },
-    { "name": "cmp_luasnip", "repo": "https://github.com/saadparwaiz1/cmp_luasnip.git", "ref": "master", "commit": "98d9cb5c2c38532bd9bdb481067b20fea8f32e90" },
-    { "name": "friendly-snippets", "repo": "https://github.com/rafamadriz/friendly-snippets.git", "ref": "main", "commit": "7a1c9f7897a4eb078b157a04c7af81e5869215b1" },
-    { "name": "telescope.nvim", "repo": "https://github.com/nvim-telescope/telescope.nvim.git", "ref": "master", "commit": "1e1bab730218eaf97fce743be3f56e51075928ac" },
-    { "name": "plenary.nvim", "repo": "https://github.com/nvim-lua/plenary.nvim.git", "ref": "master", "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b" },
-    { "name": "nvim-tree.lua", "repo": "https://github.com/nvim-tree/nvim-tree.lua.git", "ref": "master", "commit": "dbc9d96a3633c2de85f409416ebd4a3aacf4220a" },
-    { "name": "nvim-web-devicons", "repo": "https://github.com/nvim-tree/nvim-web-devicons.git", "ref": "master", "commit": "0dc0cfb0c6858041174a53c7aa4adaf65e994b3c" },
-    { "name": "lualine.nvim", "repo": "https://github.com/nvim-lualine/lualine.nvim.git", "ref": "master", "commit": "221ce6b2d999187044529f49da6554a92f740a96" },
-    { "name": "gitsigns.nvim", "repo": "https://github.com/lewis6991/gitsigns.nvim.git", "ref": "main", "commit": "dc7698f932792a764d3db95fedee26c38e728355" },
-    { "name": "Comment.nvim", "repo": "https://github.com/numToStr/Comment.nvim.git", "ref": "master", "commit": "e30b7f2008e52442154b66f7c519bfd2f1e32acb" },
-    { "name": "nvim-autopairs", "repo": "https://github.com/windwp/nvim-autopairs.git", "ref": "master", "commit": "3172f40c16563db871a58f20d205c710ad782311" },
-    { "name": "nvim-surround", "repo": "https://github.com/kylechui/nvim-surround.git", "ref": "main", "commit": "8b47db616ef658b8fc27e61db2896aa2f40134de" },
-    { "name": "which-key.nvim", "repo": "https://github.com/folke/which-key.nvim.git", "ref": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" },
-    { "name": "conform.nvim", "repo": "https://github.com/stevearc/conform.nvim.git", "ref": "master", "commit": "016802de402556da54c36bd7359b441266b01cdd" }
+    {
+      "name": "nvim-lspconfig",
+      "repo": "https://github.com/neovim/nvim-lspconfig.git",
+      "ref": "master",
+      "commit": "6e72b89d499455611f09f46d13ee9f79325406e5"
+    },
+    {
+      "name": "nvim-cmp",
+      "repo": "https://github.com/hrsh7th/nvim-cmp.git",
+      "ref": "main",
+      "commit": "fe29aba4117227a6df637bc41e4b4fb4e98864a0"
+    },
+    {
+      "name": "cmp-nvim-lsp",
+      "repo": "https://github.com/hrsh7th/cmp-nvim-lsp.git",
+      "ref": "main",
+      "commit": "cd4ee08a988deb47ac3726f418fb27fe1a95729d"
+    },
+    {
+      "name": "cmp-buffer",
+      "repo": "https://github.com/hrsh7th/cmp-buffer.git",
+      "ref": "main",
+      "commit": "b74fab3656eea9de20a9b8116afa3cfc4ec09657"
+    },
+    {
+      "name": "cmp-path",
+      "repo": "https://github.com/hrsh7th/cmp-path.git",
+      "ref": "main",
+      "commit": "c642487086dbd9a93160e1679a1327be111cbc25"
+    },
+    {
+      "name": "cmp-cmdline",
+      "repo": "https://github.com/hrsh7th/cmp-cmdline.git",
+      "ref": "main",
+      "commit": "d126061b624e0af6c3a556428712dd4d4194ec6d"
+    },
+    {
+      "name": "LuaSnip",
+      "repo": "https://github.com/L3MON4D3/LuaSnip.git",
+      "ref": "master",
+      "commit": "0abc8f390b278c3b4aabc4c004ac8a088b65cf24"
+    },
+    {
+      "name": "cmp_luasnip",
+      "repo": "https://github.com/saadparwaiz1/cmp_luasnip.git",
+      "ref": "master",
+      "commit": "98d9cb5c2c38532bd9bdb481067b20fea8f32e90"
+    },
+    {
+      "name": "friendly-snippets",
+      "repo": "https://github.com/rafamadriz/friendly-snippets.git",
+      "ref": "main",
+      "commit": "7a1c9f7897a4eb078b157a04c7af81e5869215b1"
+    },
+    {
+      "name": "telescope.nvim",
+      "repo": "https://github.com/nvim-telescope/telescope.nvim.git",
+      "ref": "master",
+      "commit": "1e1bab730218eaf97fce743be3f56e51075928ac"
+    },
+    {
+      "name": "plenary.nvim",
+      "repo": "https://github.com/nvim-lua/plenary.nvim.git",
+      "ref": "master",
+      "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b"
+    },
+    {
+      "name": "nvim-tree.lua",
+      "repo": "https://github.com/nvim-tree/nvim-tree.lua.git",
+      "ref": "master",
+      "commit": "dbc9d96a3633c2de85f409416ebd4a3aacf4220a"
+    },
+    {
+      "name": "nvim-web-devicons",
+      "repo": "https://github.com/nvim-tree/nvim-web-devicons.git",
+      "ref": "master",
+      "commit": "0dc0cfb0c6858041174a53c7aa4adaf65e994b3c"
+    },
+    {
+      "name": "lualine.nvim",
+      "repo": "https://github.com/nvim-lualine/lualine.nvim.git",
+      "ref": "master",
+      "commit": "221ce6b2d999187044529f49da6554a92f740a96"
+    },
+    {
+      "name": "gitsigns.nvim",
+      "repo": "https://github.com/lewis6991/gitsigns.nvim.git",
+      "ref": "main",
+      "commit": "dc7698f932792a764d3db95fedee26c38e728355"
+    },
+    {
+      "name": "Comment.nvim",
+      "repo": "https://github.com/numToStr/Comment.nvim.git",
+      "ref": "master",
+      "commit": "e30b7f2008e52442154b66f7c519bfd2f1e32acb"
+    },
+    {
+      "name": "nvim-autopairs",
+      "repo": "https://github.com/windwp/nvim-autopairs.git",
+      "ref": "master",
+      "commit": "3172f40c16563db871a58f20d205c710ad782311"
+    },
+    {
+      "name": "nvim-surround",
+      "repo": "https://github.com/kylechui/nvim-surround.git",
+      "ref": "main",
+      "commit": "8b47db616ef658b8fc27e61db2896aa2f40134de"
+    },
+    {
+      "name": "which-key.nvim",
+      "repo": "https://github.com/folke/which-key.nvim.git",
+      "ref": "main",
+      "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a"
+    },
+    {
+      "name": "conform.nvim",
+      "repo": "https://github.com/stevearc/conform.nvim.git",
+      "ref": "master",
+      "commit": "016802de402556da54c36bd7359b441266b01cdd"
+    },
+    {
+      "name": "catppuccin",
+      "repo": "https://github.com/catppuccin/nvim.git",
+      "ref": "main",
+      "commit": "edefef779ab08ce1a4a404713e3012b0d202bd35"
+    }
   ]
 }
