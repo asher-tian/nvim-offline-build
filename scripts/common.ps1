@@ -11,7 +11,8 @@ function Assert-Command {
 function Invoke-Download {
     param(
         [Parameter(Mandatory = $true)][string]$Url,
-        [Parameter(Mandatory = $true)][string]$Destination
+        [Parameter(Mandatory = $true)][string]$Destination,
+        [string]$ExpectedSha256
     )
 
     $parent = Split-Path -Parent $Destination
@@ -20,14 +21,52 @@ function Invoke-Download {
     }
 
     if (Test-Path $Destination) {
-        Remove-Item -LiteralPath $Destination -Force
+        $existing = Get-Item -LiteralPath $Destination
+        if ($existing.Length -gt 0) {
+            if ($ExpectedSha256) {
+                $actual = (Get-FileHash -LiteralPath $Destination -Algorithm SHA256).Hash.ToLowerInvariant()
+                if ($actual -eq $ExpectedSha256.ToLowerInvariant()) {
+                    Write-Host "Download cache hit: $(Split-Path -Leaf $Destination)"
+                    return
+                }
+
+                Write-Warning "Cached download checksum mismatch; downloading again: $Destination"
+                Remove-Item -LiteralPath $Destination -Force
+            } else {
+                Write-Host "Download cache hit: $(Split-Path -Leaf $Destination)"
+                return
+            }
+        } else {
+            Remove-Item -LiteralPath $Destination -Force
+        }
+    }
+
+    $temporary = "$Destination.download"
+    if (Test-Path $temporary) {
+        Remove-Item -LiteralPath $temporary -Force
     }
 
     Write-Host "Download: $Url"
-    Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -TimeoutSec 900
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $temporary -UseBasicParsing -TimeoutSec 900
 
-    if (-not (Test-Path $Destination) -or (Get-Item $Destination).Length -eq 0) {
-        throw "Download produced an empty file: $Destination"
+        if (-not (Test-Path $temporary) -or (Get-Item -LiteralPath $temporary).Length -eq 0) {
+            throw "Download produced an empty file: $Url"
+        }
+
+        if ($ExpectedSha256) {
+            $actual = (Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $ExpectedSha256.ToLowerInvariant()) {
+                throw "SHA256 mismatch for downloaded file $Url. Expected $ExpectedSha256, got $actual"
+            }
+        }
+
+        Move-Item -LiteralPath $temporary -Destination $Destination -Force
+    } catch {
+        if (Test-Path $temporary) {
+            Remove-Item -LiteralPath $temporary -Force
+        }
+        throw
     }
 }
 
@@ -66,6 +105,19 @@ function Assert-Sha256 {
     }
 
     Write-Host "SHA256 OK: $(Split-Path -Leaf $Path)"
+}
+
+function Get-TextSha256 {
+    param([Parameter(Mandatory = $true)][string]$Text)
+
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
+        $hash = $sha256.ComputeHash($bytes)
+        return [BitConverter]::ToString($hash).Replace("-", "").ToLowerInvariant()
+    } finally {
+        $sha256.Dispose()
+    }
 }
 
 function Write-Utf8Lf {
