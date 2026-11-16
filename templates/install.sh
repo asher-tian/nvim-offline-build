@@ -75,7 +75,7 @@ cp "$TMP/rg/rg" "$RUNTIME/tools/bin/rg"
 cp "$PAYLOAD/shfmt_v3.11.0_linux_amd64" "$RUNTIME/tools/bin/shfmt"
 
 # Restore executable bits lost when the archive was created on Windows.
-chmod 755 "$ROOT/nvim" "$ROOT/verify.sh"
+chmod 755 "$ROOT/nvim" "$ROOT/verify.sh" "$ROOT/install-fonts.sh" "$ROOT/uninstall-fonts.sh"
 chmod 755 "$RUNTIME/neovim/bin/nvim"
 chmod 755 "$RUNTIME/node/bin/node"
 chmod 755 "$RUNTIME/tools/bin/rg" "$RUNTIME/tools/bin/shfmt"
