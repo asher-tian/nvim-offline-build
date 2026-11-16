@@ -50,12 +50,9 @@ dist/
 └── nvim-centos7-x86_64-node22.23.5.tar.gz
 ~~~
 
-首次构建会解析插件分支并生成两个锁文件：
+仓库已经提交 locks/plugins.lock.json，固定了第一版插件 Git commit。首次构建会生成 locks/npm/package-lock.json，记录 npm 依赖的完整版本树。
 
-- locks/plugins.lock.json：记录每个插件的 Git commit。
-- locks/npm/package-lock.json：记录 npm 依赖的完整版本树。
-
-**首次构建后应将这两个锁文件提交到 Git。** 后续构建使用锁定的插件 commit 和 npm package-lock，不会自动追随上游更新。
+**首次构建后应将 locks/npm/package-lock.json 提交到 Git。** 后续构建使用锁定的插件 commit 和 npm package-lock，不会自动追随上游更新。
 
 需要主动升级插件或 npm 依赖时，执行：
 
@@ -63,7 +60,7 @@ dist/
 .\build.ps1 -RefreshLocks
 ~~~
 
-检查锁文件差异并提交后，再发布新的离线包。不要在日常构建中使用 -RefreshLocks。
+检查 locks/plugins.lock.json 和 locks/npm/package-lock.json 的差异并提交后，再发布新的离线包。不要在日常构建中使用 -RefreshLocks。
 
 可选参数：
 
