@@ -53,7 +53,7 @@ end
 -- tclint documents this direct LSP start pattern. It also supports EDA Tcl
 -- variants such as SDC, XDC and UPF; all Python dependencies are bundled.
 vim.api.nvim_create_autocmd("FileType", {
-    pattern = { "tcl", "sdc", "xdc", "upf" },
+    pattern = { "tcl" },
     callback = function(event)
         local root_dir = vim.fs.root(event.buf, {
             "tclint.toml",
