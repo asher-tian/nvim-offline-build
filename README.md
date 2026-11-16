@@ -79,7 +79,7 @@ dist/
 
 ~~~text
 cache/
-├── downloads/             # Neovim、Node.js、ripgrep、shfmt 原始文件
+├── downloads/             # Neovim、Node.js、CPython、字体、ShellCheck、Verible 等原始文件
 ├── npm-downloads/         # npm 下载的包缓存
 ├── npm-installs/           # 按 package.json / package-lock 锁定的 node_modules
 ├── builder/                # 固定版本的 Windows uv 构建工具
