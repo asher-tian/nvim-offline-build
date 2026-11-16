@@ -151,6 +151,7 @@ $npmLockDestination = Join-Path $npmWork "package-lock.json"
 $npmPackageDestination = Join-Path $npmWork "package.json"
 
 Copy-Item -LiteralPath $packageJsonSource -Destination $npmPackageDestination -Force
+$npmManifest = Get-Content -LiteralPath $npmPackageDestination -Raw | ConvertFrom-Json
 
 $useExistingLock = (Test-Path $npmLockSource) -and (-not $RefreshLocks)
 if ($useExistingLock) {
@@ -229,7 +230,7 @@ Copy-Item -LiteralPath (Join-Path $npmInstallEntry "node_modules") -Destination 
 $nodeModules = Join-Path $npmInstallEntry "node_modules"
 
 # Generate POSIX command shims from npm package bin metadata.
-foreach ($dependency in $((Get-Content -LiteralPath $npmPackageDestination -Raw | ConvertFrom-Json).dependencies.PSObject.Properties)) {
+foreach ($dependency in $npmManifest.dependencies.PSObject.Properties) {
     $packageName = $dependency.Name
     $packagePath = Join-Path $nodeModules ($packageName -replace "/", "\")
     $packageJsonPath = Join-Path $packagePath "package.json"
@@ -348,7 +349,12 @@ foreach ($plugin in $pluginManifest.plugins) {
     }
 
     $commit = $null
-    $mustFetchBranch = $RefreshLocks -or (-not $lockedPlugin) -or (-not $lockedPlugin.commit)
+    $mustFetchBranch = [bool]$RefreshLocks
+    if (-not $lockedPlugin) {
+        $mustFetchBranch = $true
+    } elseif (-not $lockedPlugin.commit) {
+        $mustFetchBranch = $true
+    }
 
     if (-not $mustFetchBranch) {
         $lockedCommit = [string]$lockedPlugin.commit
