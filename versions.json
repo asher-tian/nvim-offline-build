@@ -9,7 +9,13 @@
     "node": "22.23.5",
     "npm": "10.9.9",
     "gitRequired": true,
-    "powershellMinimum": "5.1"
+    "powershellMinimum": "5.1",
+    "uv": {
+      "version": "0.13.8",
+      "file": "uv-x86_64-pc-windows-msvc.zip",
+      "url": "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-x86_64-pc-windows-msvc.zip",
+      "sha256": "529e78a9cec6cd7e3e014f7ecd8bda0c113969d4ed0f2efeedb85c30943325b8"
+    }
   },
   "runtime": {
     "neovim": {
@@ -25,6 +31,14 @@
       "url": "https://unofficial-builds.nodejs.org/download/release/v22.23.5/node-v22.23.5-linux-x64-glibc-217.tar.gz",
       "checksumUrl": "https://unofficial-builds.nodejs.org/download/release/v22.23.5/SHASUMS256.txt",
       "build": "unofficial-linux-x64-glibc-217"
+    },
+    "python": {
+      "version": "3.11.18",
+      "release": "20261110",
+      "file": "cpython-3.11.18+20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.11.18%2B20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+      "sha256": "3288c54cea3db350052019b3f8b558dd8a3da8afa6fda573f5fd2bcb37635b4a",
+      "build": "python-build-standalone-linux-gnu"
     }
   },
   "tools": {
@@ -39,16 +53,28 @@
       "file": "shfmt_v3.11.0_linux_amd64",
       "url": "https://github.com/mvdan/sh/releases/download/v3.11.0/shfmt_v3.11.0_linux_amd64",
       "checksumUrl": "https://github.com/mvdan/sh/releases/download/v3.11.0/sha256sums.txt"
+    },
+    "shellcheck": {
+      "version": "0.11.0",
+      "file": "shellcheck-v0.11.0.linux.x86_64.tar.gz",
+      "url": "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.gz",
+      "sha256": "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6"
+    },
+    "verible": {
+      "version": "v0.0-4300-ga832669d",
+      "file": "verible-v0.0-4300-ga832669d-linux-static-x86_64.tar.gz",
+      "url": "https://github.com/chipsalliance/verible/releases/download/v0.0-4300-ga832669d/verible-v0.0-4300-ga832669d-linux-static-x86_64.tar.gz",
+      "sha256": "d72a7ad9047a10d61681ab4dc4e2a9434955485f9fcbebe7dfa52fc8f65ee482"
     }
   },
   "fonts": {
-    "mapleMonoNf": {
+    "mapleMonoNfCn": {
       "version": "7.9",
-      "file": "MapleMono-NF.zip",
-      "url": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-NF.zip",
-      "checksumFile": "MapleMono-NF.sha256",
-      "checksumUrl": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-NF.sha256",
-      "family": "Maple Mono NF"
+      "file": "MapleMono-NF-CN.zip",
+      "url": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-NF-CN.zip",
+      "checksumFile": "MapleMono-NF-CN.sha256",
+      "checksumUrl": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-NF-CN.sha256",
+      "family": "Maple Mono NF CN"
     }
   }
 }
