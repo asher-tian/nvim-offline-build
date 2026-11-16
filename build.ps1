@@ -102,11 +102,8 @@ Assert-Sha256 -Path $nodeArchive -Expected $nodeSha
 # 2. Download portable Linux command-line tools used by the IDE.
 $rg = $versions.tools.ripgrep
 $rgArchive = Join-Path $payloadRoot $rg.file
-$rgChecksum = Join-Path $payloadRoot "ripgrep.sha256"
 Invoke-Download -Url $rg.url -Destination $rgArchive
-Invoke-Download -Url $rg.checksumUrl -Destination $rgChecksum
-$rgSha = Get-ChecksumFromFile -ChecksumFile $rgChecksum -AssetName $rg.file
-Assert-Sha256 -Path $rgArchive -Expected $rgSha
+Assert-Sha256 -Path $rgArchive -Expected $rg.sha256
 
 $shfmt = $versions.tools.shfmt
 $shfmtBinary = Join-Path $payloadRoot $shfmt.file
@@ -293,7 +290,7 @@ Get-ChildItem -LiteralPath $bundleRoot -Recurse -File |
         $checksumLines += "$hash  $relative"
     }
 
-Write-Utf8Lf -Path (Join-Path $bundleRoot "manifest/SHA256SUMS.txt") -Content ([string]::Join([char]10, $checksumLines))
+Write-Utf8Lf -Path (Join-Path $bundleRoot "manifest/SHA256SUMS.txt") -Content ([string]::Join([Environment]::NewLine, $checksumLines))
 
 # 6. Package the bundle. The archive contains the contents of the bundle root,
 # so it can be extracted directly into the chosen installation directory.
