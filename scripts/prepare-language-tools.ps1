@@ -31,7 +31,7 @@ if (-not (Test-Path $uvExecutable)) {
 }
 
 $uvActual = (& $uvExecutable --version).Trim()
-if ($LASTEXITCODE -ne 0 -or $uvActual -ne ("uv " + $uv.version)) {
+if ($LASTEXITCODE -ne 0 -or $uvActual -notmatch ("^uv " + [regex]::Escape($uv.version) + "(\s|$)")) {
     throw "Unexpected uv version. Expected uv $($uv.version), got $uvActual"
 }
 
