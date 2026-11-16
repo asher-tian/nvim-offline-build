@@ -40,6 +40,9 @@ awk -v version="$GLIBC_VERSION" 'BEGIN {
 [ -f "$PAYLOAD/node-v22.23.5-linux-x64-glibc-217.tar.gz" ] || fail "Missing Node.js 22.23.5 payload."
 [ -f "$PAYLOAD/ripgrep-15.2.0-x86_64-unknown-linux-musl.tar.gz" ] || fail "Missing ripgrep payload."
 [ -f "$PAYLOAD/shfmt_v3.11.0_linux_amd64" ] || fail "Missing shfmt payload."
+[ -f "$PAYLOAD/cpython-3.11.18+20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz" ] || fail "Missing bundled Python 3.11.18 payload."
+[ -f "$PAYLOAD/shellcheck-v0.11.0.linux.x86_64.tar.gz" ] || fail "Missing ShellCheck payload."
+[ -f "$PAYLOAD/verible-v0.0-4300-ga832669d-linux-static-x86_64.tar.gz" ] || fail "Missing Verible payload."
 
 # Fail early on noexec filesystems. The installation directory must allow execution.
 mkdir -p "$ROOT/cache/tmp"
@@ -66,19 +69,45 @@ mkdir -p "$RUNTIME/node"
 tar -xzf "$PAYLOAD/node-v22.23.5-linux-x64-glibc-217.tar.gz" \
     -C "$RUNTIME/node" --strip-components=1
 
-info "Installing ripgrep and shfmt..."
-mkdir -p "$TMP/rg" "$RUNTIME/tools/bin"
+info "Extracting bundled Python 3.11.18 for Tcl tooling..."
+rm -rf "$RUNTIME/python"
+mkdir -p "$RUNTIME/python"
+tar -xzf "$PAYLOAD/cpython-3.11.18+20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz" \
+    -C "$RUNTIME/python" --strip-components=1
+[ -x "$RUNTIME/python/bin/python3.11" ] || fail "Bundled Python archive did not contain bin/python3.11."
+
+info "Installing ripgrep, shfmt, ShellCheck and Verible..."
+mkdir -p "$TMP/rg" "$TMP/shellcheck" "$TMP/verible" "$RUNTIME/tools/bin"
 tar -xzf "$PAYLOAD/ripgrep-15.2.0-x86_64-unknown-linux-musl.tar.gz" \
     -C "$TMP/rg" --strip-components=1
 [ -f "$TMP/rg/rg" ] || fail "ripgrep archive did not contain rg."
 cp "$TMP/rg/rg" "$RUNTIME/tools/bin/rg"
 cp "$PAYLOAD/shfmt_v3.11.0_linux_amd64" "$RUNTIME/tools/bin/shfmt"
 
+tar -xzf "$PAYLOAD/shellcheck-v0.11.0.linux.x86_64.tar.gz" \
+    -C "$TMP/shellcheck" --strip-components=1
+shellcheck_source="$(find "$TMP/shellcheck" -type f -name shellcheck -print -quit)"
+[ -n "$shellcheck_source" ] || fail "ShellCheck archive did not contain the shellcheck executable."
+cp "$shellcheck_source" "$RUNTIME/tools/bin/shellcheck"
+
+tar -xzf "$PAYLOAD/verible-v0.0-4300-ga832669d-linux-static-x86_64.tar.gz" \
+    -C "$TMP/verible" --strip-components=1
+for tool_name in verible-verilog-ls verible-verilog-lint verible-verilog-format; do
+    tool_source="$(find "$TMP/verible" -type f -name "$tool_name" -print -quit)"
+    [ -n "$tool_source" ] || fail "Verible archive did not contain $tool_name."
+    cp "$tool_source" "$RUNTIME/tools/bin/$tool_name"
+done
+
 # Restore executable bits lost when the archive was created on Windows.
 chmod 755 "$ROOT/nvim" "$ROOT/verify.sh" "$ROOT/install-fonts.sh" "$ROOT/uninstall-fonts.sh"
 chmod 755 "$RUNTIME/neovim/bin/nvim"
 chmod 755 "$RUNTIME/node/bin/node"
-chmod 755 "$RUNTIME/tools/bin/rg" "$RUNTIME/tools/bin/shfmt"
+chmod 755 "$RUNTIME/tools/bin/rg" "$RUNTIME/tools/bin/shfmt" \
+    "$RUNTIME/tools/bin/shellcheck" \
+    "$RUNTIME/tools/bin/verible-verilog-ls" \
+    "$RUNTIME/tools/bin/verible-verilog-lint" \
+    "$RUNTIME/tools/bin/verible-verilog-format" \
+    "$RUNTIME/python/bin/python3.11"
 
 if [ -d "$RUNTIME/commands" ]; then
     find "$RUNTIME/commands" -type f -exec chmod 755 {} \;
@@ -93,9 +122,17 @@ if ldd "$RUNTIME/node/bin/node" 2>&1 | grep -q "not found"; then
     ldd "$RUNTIME/node/bin/node" >&2
     fail "Node.js has unresolved shared-library dependencies."
 fi
+if ldd "$RUNTIME/python/bin/python3.11" 2>&1 | grep -q "not found"; then
+    ldd "$RUNTIME/python/bin/python3.11" >&2
+    fail "Bundled Python has unresolved shared-library dependencies."
+fi
 
 NODE_VERSION="$("$RUNTIME/node/bin/node" --version)"
 [ "$NODE_VERSION" = "v22.23.5" ] || fail "Unexpected Node.js version: $NODE_VERSION"
+
+PYTHON_VERSION="$("$RUNTIME/python/bin/python3.11" --version 2>&1)"
+[ "$PYTHON_VERSION" = "Python 3.11.18" ] || fail "Unexpected bundled Python version: $PYTHON_VERSION"
+PYTHONPATH="$ROOT/runtime/python-packages" "$RUNTIME/python/bin/python3.11" -c 'import tclint, pygls' || fail "Tcl tooling Python dependencies could not be imported."
 
 NPM_VERSION="$(PATH="$RUNTIME/node/bin:$PATH" "$RUNTIME/node/bin/npm" --version)"
 [ "$NPM_VERSION" = "10.9.9" ] || fail "Unexpected npm version: $NPM_VERSION"
