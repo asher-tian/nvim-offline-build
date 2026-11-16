@@ -120,7 +120,7 @@ dist/                       # 最终 tar.gz
 .\build.ps1 -OutputDirectory D:\Artifacts
 ~~~
 
-`-Clean` 与 `-RefreshLocks` 可以组合使用。正常修改 Lua 配置、Shell 脚本或构建模板时，不需要使用这两个参数。修改 修改 `package.json` 中的依赖版本时，应执行 `-RefreshLocks` 更新 npm 锁文件；调整 Tcl 工具版本或 Python 依赖时，也执行 `-RefreshLocks` 更新 Python 锁文件。之后提交更新后的两个锁文件。
+`-Clean` 与 `-RefreshLocks` 可以组合使用。正常修改 Lua 配置、Shell 脚本或构建模板时，不需要使用这两个参数。修改 `package.json` 中的依赖版本时，应执行 `-RefreshLocks` 更新 npm 锁文件；调整 Tcl 工具版本或 Python 依赖时，也执行 `-RefreshLocks` 更新 Python 锁文件。之后提交更新后的两个锁文件。
 
 ## CentOS 7 部署
 
@@ -135,7 +135,7 @@ tar -xzf nvim-centos7-x86_64-node22.23.5.tar.gz \
 cd /data/devtools/nvim
 bash install.sh
 
-# 可选：将安装目录内的 Maple Mono NF 注册到系统 Fontconfig（需要 root）
+# 可选：将安装目录内的 Maple Mono NF CN 注册到系统 Fontconfig（需要 root）
 sudo bash install-fonts.sh
 ~~~
 
