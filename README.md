@@ -65,7 +65,7 @@ dist/
 
 **首次构建后应将这两个锁文件提交到 Git。** 后续构建使用锁定的插件 commit、npm package-lock 和 Python requirements lock，不会自动追随上游更新。
 
-需要主动升级插件或 npm 依赖时，执行：
+需要主动升级插件、npm 依赖或 Tcl Python 依赖时，执行：
 
 ~~~powershell
 .\build.ps1 -RefreshLocks
@@ -84,6 +84,7 @@ cache/
 ├── npm-installs/           # 按 package.json / package-lock 锁定的 node_modules
 ├── builder/                # 固定版本的 Windows uv 构建工具
 ├── uv-cache/               # Tcl Python wheels 的下载缓存
+├── source-cache/            # ShellCheck 对应的 GPL 源码快照
 ├── plugin-git/             # 插件 Git 对象缓存
 └── plugin-snapshots/       # 按插件 commit 保存的工作树快照
 
@@ -113,7 +114,7 @@ dist/                       # 最终 tar.gz
 # 清除 work/ 和 cache/，重新下载、安装和构建；保留锁文件及 dist/
 .\build.ps1 -Clean
 
-# 主动更新插件分支和 npm 依赖锁文件；仍复用已有下载缓存
+# 主动更新插件分支、npm 和 Tcl Python 依赖锁文件；仍复用已有下载缓存
 .\build.ps1 -RefreshLocks
 
 # 指定最终产物目录
@@ -267,8 +268,8 @@ sudo bash uninstall-fonts.sh
 
 ## 完整性
 
-构建包内 manifest/SHA256SUMS.txt 列出文件 SHA256。Node.js 归档在构建时使用 unofficial-builds 提供的 SHASUMS256.txt 校验；Neovim 归档使用固定 SHA256 校验；ripgrep 和 shfmt 使用上游校验文件。
+构建包内 manifest/SHA256SUMS.txt 列出文件 SHA256。Node.js 归档在构建时使用 unofficial-builds 提供的 SHASUMS256.txt 校验；Neovim、CPython、uv、ShellCheck、Verible 和字体归档使用固定 SHA256 校验；ripgrep 和 shfmt 使用上游校验文件。ShellCheck 的 GPL-3.0 对应源码按固定 Git commit 一并放在 licenses/sources/。
 
 ## 限制
 
-CentOS 7 已停止常规维护。Node.js glibc-217 与 Neovim 旧 glibc 构建均属于兼容性方案，不应视为现代受支持发行版。该项目只保证构建目标是 CentOS 7 x86_64 / glibc 2.17，并通过目标机上的 install.sh、verify.sh 做最终验证。
+CentOS 7 已停止常规维护。Node.js glibc-217、CPython Linux 构建与 Neovim 旧 glibc 构建均属于兼容性方案，不应视为现代受支持发行版。该项目只保证构建目标是 CentOS 7 x86_64 / glibc 2.17，并通过目标机上的 install.sh、verify.sh 做最终验证。
