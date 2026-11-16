@@ -127,9 +127,12 @@ tar -xzf nvim-centos7-x86_64-node22.23.5.tar.gz \
 
 cd /data/devtools/nvim
 bash install.sh
+
+# 可选：将安装目录内的 Maple Mono NF 注册到系统 Fontconfig（需要 root）
+sudo bash install-fonts.sh
 ~~~
 
-安装不需要 root，不会修改 /usr/bin、/usr/local/bin、系统 PATH 或用户 Home 下的 Neovim 配置。
+Neovim 本体安装不需要 root，不会修改 /usr/bin、/usr/local/bin、系统 PATH 或用户 Home 下的 Neovim 配置。字体注册是独立的可选步骤，需要 root 和 fontconfig；它只在 /etc/fonts/conf.d 写入一个配置，让系统直接读取安装目录内的字体，不会把字体复制到 Home。
 
 启动：
 
@@ -157,6 +160,9 @@ nvim/
 ├── config/
 │   ├── nvim/                    # Neovim 配置
 │   └── npmrc                    # 私有 npm 配置
+├── fonts/maple-mono/            # Maple Mono NF 静态 TTF + OFL license
+├── install-fonts.sh             # 可选：注册系统字体
+└── uninstall-fonts.sh           # 可选：移除字体注册
 ├── data/nvim/site/pack/          # 插件
 ├── state/nvim/                  # undo、swap、backup 等状态
 ├── cache/                       # Neovim、Pyright、npm、临时缓存
@@ -203,12 +209,31 @@ Pyright 通过 Node.js 运行。目标机器仍需有可用的 Python 解释器�
 
 全文搜索依赖打包的 ripgrep。Git 差异显示依赖目标系统已有 Git；本项目不替换系统 Git。
 
+## 默认主题与终端字体
+
+- 默认主题为 Catppuccin Mocha，主题插件随离线包一起部署。
+- 默认包含 Maple Mono NF 字体文件，包含 Nerd Font 图标字形；字体文件和 OFL license 均放在安装目录内。
+- 注册字体后，GNOME Terminal / KDE Konsole 仍需在终端配置中手动选择 `Maple Mono NF`。
+- Maple Mono NF 本身不内置完整 CJK 字形；中文、日文由系统已有的 CJK 字体 fallback。若目标系统没有 CJK 字体，需要另外准备 Maple Mono NF CN（体积明显更大）。
+- 如果 Neovim 是通过 SSH 在 Windows Terminal 中运行，字体必须安装并配置在 Windows 客户端；CentOS 端的字体包不会改变 Windows Terminal 的字体。
+
+注册和移除字体：
+
+~~~bash
+sudo bash install-fonts.sh
+# 在 GNOME Terminal / Konsole 的 Profile / Appearance 中选择 Maple Mono NF
+sudo bash uninstall-fonts.sh
+~~~
+
+字体只影响终端渲染，不会由 Neovim 自身设置。Neovim TUI 不能替终端模拟器选择字体。
+
 ## 完全离线边界
 
 - CentOS 不访问 npm、GitHub 或其他网络服务。
 - 不使用 Mason、Lazy.nvim 在线安装或自动更新插件。
 - 所有 npm 语言服务器和插件在 Windows 构建时准备。
 - Node.js、Neovim、ripgrep、shfmt 的 Linux 目标文件在 Windows 侧下载原始归档，保留原始归档，在 CentOS 解压。
+- Tcl/Tk 使用 Neovim 自带 Tcl 语法高亮；额外识别 .tm、.itcl、.tk，并设置 4 空格缩进。它不是 Tcl LSP。
 - CSH/TCSH 当前提供语法识别，不宣称具备成熟 LSP 能力。
 
 ## 完整性
