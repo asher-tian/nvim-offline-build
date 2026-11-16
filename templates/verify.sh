@@ -60,6 +60,9 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'setfiletype icl' \
     -c 'lua assert(vim.bo.filetype == "icl")' \
     -c 'lua assert(vim.b.current_syntax == "icl")' \
+    -c 'lua vim.api.nvim_buf_set_lines(0, 0, -1, false, {"Module top {"})' \
+    -c 'lua assert(vim.fn.synIDattr(vim.fn.synID(1, 1, 1), "name") == "iclStructure")' \
+    -c 'lua assert(vim.fn.synIDattr(vim.fn.synID(1, 8, 1), "name") == "iclDeclaredName")' \
     -c 'lua print("config=" .. vim.fn.stdpath("config"))' \
     -c 'lua print("data=" .. vim.fn.stdpath("data"))' \
     -c 'lua print("state=" .. vim.fn.stdpath("state"))' \
