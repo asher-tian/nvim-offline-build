@@ -1,0 +1,3 @@
+# Tcl/Tk language server, linter, and formatter
+# Resolved for Python 3.11 on Linux x86_64 during the Windows build.
+tclint==0.9.0
