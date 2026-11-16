@@ -36,7 +36,7 @@ awk -v version="$GLIBC_VERSION" 'BEGIN {
 
 [ -f "$PAYLOAD/nvim-linux-x86_64.tar.gz" ] || fail "Missing Neovim payload."
 [ -f "$PAYLOAD/node-v22.23.5-linux-x64-glibc-217.tar.gz" ] || fail "Missing Node.js 22.23.5 payload."
-[ -f "$PAYLOAD/ripgrep-14.1.1-x86_64-unknown-linux-musl.tar.gz" ] || fail "Missing ripgrep payload."
+[ -f "$PAYLOAD/ripgrep-15.2.0-x86_64-unknown-linux-musl.tar.gz" ] || fail "Missing ripgrep payload."
 [ -f "$PAYLOAD/shfmt_v3.11.0_linux_amd64" ] || fail "Missing shfmt payload."
 
 # Fail early on noexec filesystems. The installation directory must allow execution.
@@ -66,7 +66,7 @@ tar -xzf "$PAYLOAD/node-v22.23.5-linux-x64-glibc-217.tar.gz" \
 
 info "Installing ripgrep and shfmt..."
 mkdir -p "$TMP/rg" "$RUNTIME/tools/bin"
-tar -xzf "$PAYLOAD/ripgrep-14.1.1-x86_64-unknown-linux-musl.tar.gz" \
+tar -xzf "$PAYLOAD/ripgrep-15.2.0-x86_64-unknown-linux-musl.tar.gz" \
     -C "$TMP/rg" --strip-components=1
 [ -f "$TMP/rg/rg" ] || fail "ripgrep archive did not contain rg."
 cp "$TMP/rg/rg" "$RUNTIME/tools/bin/rg"
