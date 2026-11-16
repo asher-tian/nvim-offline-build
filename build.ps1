@@ -92,9 +92,15 @@ if (-not $Clean) {
         }
     }
 
-    if (-not (Test-Path (Join-Path $legacyNpmRoot "node_modules"))) {
+    $legacyNpmComplete = (Test-Path (Join-Path $legacyNpmRoot "node_modules")) -and
+        (Test-Path (Join-Path $legacyNpmRoot "package.json")) -and
+        (Test-Path (Join-Path $legacyNpmRoot "package-lock.json"))
+    if (-not $legacyNpmComplete) {
         $bundleNpmCandidate = Join-Path $legacyBundleRoot "runtime/npm"
-        if (Test-Path (Join-Path $bundleNpmCandidate "node_modules")) {
+        $bundleNpmComplete = (Test-Path (Join-Path $bundleNpmCandidate "node_modules")) -and
+            (Test-Path (Join-Path $bundleNpmCandidate "package.json")) -and
+            (Test-Path (Join-Path $bundleNpmCandidate "package-lock.json"))
+        if ($bundleNpmComplete) {
             $legacyNpmRoot = $bundleNpmCandidate
         }
     }
