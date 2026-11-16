@@ -13,15 +13,19 @@ Invoke-Download -Url $uv.url -Destination $uvArchive -ExpectedSha256 $uv.sha256
 Assert-Sha256 -Path $uvArchive -Expected $uv.sha256
 
 $uvExtractRoot = Join-Path $builderRoot ("uv-" + $uv.version)
-$uvExecutable = Join-Path $uvExtractRoot "uv.exe"
-if (-not (Test-Path $uvExecutable)) {
+$uvExecutable = $null
+if (Test-Path $uvExtractRoot) {
+    $uvCandidate = Get-ChildItem -LiteralPath $uvExtractRoot -Filter "uv.exe" -File -Recurse | Select-Object -First 1
+    if ($uvCandidate) {
+        $uvExecutable = $uvCandidate.FullName
+    }
+}
+if (-not $uvExecutable) {
     if (Test-Path $uvExtractRoot) {
         Remove-Item -LiteralPath $uvExtractRoot -Recurse -Force
     }
     New-Item -ItemType Directory -Force -Path $uvExtractRoot | Out-Null
     Expand-Archive -LiteralPath $uvArchive -DestinationPath $uvExtractRoot -Force
-}
-if (-not (Test-Path $uvExecutable)) {
     $uvCandidate = Get-ChildItem -LiteralPath $uvExtractRoot -Filter "uv.exe" -File -Recurse | Select-Object -First 1
     if ($uvCandidate) {
         $uvExecutable = $uvCandidate.FullName
