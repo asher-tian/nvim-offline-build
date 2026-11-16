@@ -100,6 +100,8 @@ dist/                       # 最终 tar.gz
 - 下载文件存在且 SHA256 正确：直接复用；校验失败才重新下载。
 - npm 的 package.json、package-lock、npm 版本和 linux-x64 目标均未变化：复用完整 node_modules，不再执行 npm 安装。
 - npm 下载缓存独立保留；即使 node_modules 缓存缺失，也优先复用已下载的 npm 包。
+- Tcl Python wheels 使用独立 uv-cache；Python site-packages 每次从锁文件重新组装到离线包。
+- ShellCheck 对应源码按固定 commit 保存在 source-cache，重复构建不会重新 clone。
 - 插件按锁定 commit 查找快照；命中后不访问 GitHub。快照不存在时才使用本地 Git 对象缓存，必要时才 fetch。
 - 配置、启动脚本、manifest 和最终离线包每次重新组装，确保仓库中的最新修改进入产物。
 
