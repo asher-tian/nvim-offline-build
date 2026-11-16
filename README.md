@@ -27,10 +27,16 @@ Node.js glibc-217 构建来自 nodejs/unofficial-builds，属于社区维护的�
 
 ~~~powershell
 mise install
-node --version
-npm --version
+mise exec -- node --version
+mise exec -- npm --version
 git --version
 tar --version
+~~~
+
+如果当前 PowerShell 没有启用 mise 自动激活，可通过 mise 启动构建进程：
+
+~~~powershell
+mise exec -- powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ~~~
 
 预期 Node.js 为 v22.23.5，npm 为 10.9.9。
