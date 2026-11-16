@@ -1,0 +1,5 @@
+require("plugins.ui")
+require("plugins.telescope")
+require("plugins.completion")
+require("plugins.lsp")
+require("plugins.formatting")

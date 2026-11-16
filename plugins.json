@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "plugins": [
+    { "name": "nvim-lspconfig", "repo": "https://github.com/neovim/nvim-lspconfig.git", "ref": "master" },
+    { "name": "nvim-cmp", "repo": "https://github.com/hrsh7th/nvim-cmp.git", "ref": "main" },
+    { "name": "cmp-nvim-lsp", "repo": "https://github.com/hrsh7th/cmp-nvim-lsp.git", "ref": "main" },
+    { "name": "cmp-buffer", "repo": "https://github.com/hrsh7th/cmp-buffer.git", "ref": "main" },
+    { "name": "cmp-path", "repo": "https://github.com/hrsh7th/cmp-path.git", "ref": "main" },
+    { "name": "cmp-cmdline", "repo": "https://github.com/hrsh7th/cmp-cmdline.git", "ref": "main" },
+    { "name": "LuaSnip", "repo": "https://github.com/L3MON4D3/LuaSnip.git", "ref": "master" },
+    { "name": "cmp_luasnip", "repo": "https://github.com/saadparwaiz1/cmp_luasnip.git", "ref": "master" },
+    { "name": "friendly-snippets", "repo": "https://github.com/rafamadriz/friendly-snippets.git", "ref": "main" },
+    { "name": "telescope.nvim", "repo": "https://github.com/nvim-telescope/telescope.nvim.git", "ref": "master" },
+    { "name": "plenary.nvim", "repo": "https://github.com/nvim-lua/plenary.nvim.git", "ref": "master" },
+    { "name": "nvim-tree.lua", "repo": "https://github.com/nvim-tree/nvim-tree.lua.git", "ref": "master" },
+    { "name": "nvim-web-devicons", "repo": "https://github.com/nvim-tree/nvim-web-devicons.git", "ref": "master" },
+    { "name": "lualine.nvim", "repo": "https://github.com/nvim-lualine/lualine.nvim.git", "ref": "master" },
+    { "name": "gitsigns.nvim", "repo": "https://github.com/lewis6991/gitsigns.nvim.git", "ref": "main" },
+    { "name": "Comment.nvim", "repo": "https://github.com/numToStr/Comment.nvim.git", "ref": "master" },
+    { "name": "nvim-autopairs", "repo": "https://github.com/windwp/nvim-autopairs.git", "ref": "master" },
+    { "name": "nvim-surround", "repo": "https://github.com/kylechui/nvim-surround.git", "ref": "main" },
+    { "name": "which-key.nvim", "repo": "https://github.com/folke/which-key.nvim.git", "ref": "main" },
+    { "name": "conform.nvim", "repo": "https://github.com/stevearc/conform.nvim.git", "ref": "master" }
+  ]
+}

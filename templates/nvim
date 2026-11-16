@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
+export NVIM_BUNDLE_ROOT="$ROOT"
+
+export XDG_CONFIG_HOME="$ROOT/config"
+export XDG_DATA_HOME="$ROOT/data"
+export XDG_STATE_HOME="$ROOT/state"
+export XDG_CACHE_HOME="$ROOT/cache"
+
+export TMPDIR="$ROOT/cache/tmp"
+export NPM_CONFIG_CACHE="$ROOT/cache/npm"
+export NPM_CONFIG_USERCONFIG="$ROOT/config/npmrc"
+export NPM_CONFIG_PREFIX="$ROOT/runtime/npm-global"
+
+export PATH="$ROOT/runtime/commands:$ROOT/runtime/tools/bin:$ROOT/runtime/node/bin:$PATH"
+
+exec "$ROOT/runtime/neovim/bin/nvim" "$@"

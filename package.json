@@ -1,0 +1,14 @@
+{
+  "name": "nvim-centos7-offline-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline JavaScript language servers for the CentOS 7 Neovim bundle",
+  "dependencies": {
+    "bash-language-server": "5.8.1",
+    "prettier": "3.9.10",
+    "pyright": "1.1.414",
+    "typescript": "6.0.3",
+    "typescript-language-server": "6.1.0",
+    "vscode-langservers-extracted": "4.10.0"
+  }
+}
