@@ -6,6 +6,7 @@ vim.filetype.add({
         itcl = "tcl",
         tk = "tcl",
         tcsh = "csh",
+        icl = "icl",
     },
     filename = {
         [".cshrc"] = "csh",
