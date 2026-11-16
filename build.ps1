@@ -197,8 +197,9 @@ exec "$ROOT/runtime/node/bin/node" "$ROOT/runtime/npm/node_modules/__PACKAGE__/_
     }
 }
 
-# 4. Fetch plugins. First build resolves branch refs and writes a lock file.
-# Subsequent builds fetch the exact commits from that lock file.
+# 4. Fetch plugins from the committed lock file.
+# If a lock entry is absent, resolve the configured branch and record its commit.
+# -RefreshLocks intentionally resolves the current branch heads again.
 $pluginManifest = Get-Content (Join-Path $repoRoot "plugins.json") -Raw | ConvertFrom-Json
 $pluginLockPath = Join-Path $repoRoot "locks/plugins.lock.json"
 $oldPluginLock = $null
@@ -318,5 +319,5 @@ Write-Host "Build completed."
 Write-Host "Archive: $archivePath"
 Write-Host "Size: $archiveSize MB"
 Write-Host ""
-Write-Host "First build creates locks/npm/package-lock.json and locks/plugins.lock.json."
-Write-Host "Commit both lock files to make subsequent builds reproducible."
+Write-Host "First build creates locks/npm/package-lock.json."
+Write-Host "Commit the npm lock file; plugin commits are already pinned in locks/plugins.lock.json."
