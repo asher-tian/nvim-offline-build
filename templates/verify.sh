@@ -57,7 +57,7 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'lua assert(vim.bo.filetype == "tcl")' \
     -c 'lua assert(vim.bo.commentstring == "# %s")' \
     -c 'syntax on' \
-    -c 'setfiletype icl' \
+    -c 'setlocal filetype=icl' \
     -c 'lua assert(vim.bo.filetype == "icl")' \
     -c 'lua assert(vim.b.current_syntax == "icl")' \
     -c 'lua vim.api.nvim_buf_set_lines(0, 0, -1, false, {"Module top {"})' \
