@@ -6,6 +6,7 @@ vim.opt.relativenumber = true
 vim.opt.signcolumn = "yes"
 vim.opt.cursorline = true
 vim.opt.termguicolors = true
+vim.opt.background = "dark"
 
 vim.opt.expandtab = true
 vim.opt.shiftwidth = 4
