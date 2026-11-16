@@ -14,9 +14,6 @@ require("catppuccin").setup({
         nvimtree = true,
         telescope = true,
         which_key = true,
-        native_lsp = {
-            enabled = true,
-        },
     },
 })
 
