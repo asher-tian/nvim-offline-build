@@ -26,6 +26,11 @@ printf '%s\n' "== Runtime versions =="
 "$ROOT/runtime/tools/bin/rg" --version | sed -n '1p'
 "$ROOT/runtime/tools/bin/shfmt" --version
 
+printf '%s\n' "== Bundled terminal font =="
+[ -d "$ROOT/fonts/maple-mono" ] || fail "Missing Maple Mono NF font directory."
+find "$ROOT/fonts/maple-mono" -type f -name '*.ttf' -print -quit | grep -q . || fail "No Maple Mono NF TTF files found."
+printf '%s\n' "OK Maple Mono NF"
+
 printf '%s\n' "== Required language servers =="
 for command_name in \
     pyright-langserver \
@@ -47,6 +52,10 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'lua assert(require("nvim-tree"))' \
     -c 'lua assert(require("conform"))' \
     -c 'lua assert(require("lualine"))' \
+    -c 'lua assert(require("catppuccin"))' \
+    -c 'setfiletype tcl' \
+    -c 'lua assert(vim.bo.filetype == "tcl")' \
+    -c 'lua assert(vim.bo.commentstring == "# %s")' \
     -c 'lua print("config=" .. vim.fn.stdpath("config"))' \
     -c 'lua print("data=" .. vim.fn.stdpath("data"))' \
     -c 'lua print("state=" .. vim.fn.stdpath("state"))' \
