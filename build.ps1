@@ -229,9 +229,12 @@ $directories = @(
     "logs",
     "manifest",
     "payload",
+    "licenses",
     "fonts/maple-mono",
     "runtime/neovim",
     "runtime/node",
+    "runtime/python",
+    "runtime/python-packages",
     "runtime/npm",
     "runtime/npm/node_modules",
     "runtime/npm-global",
@@ -289,7 +292,7 @@ Copy-Item -LiteralPath $shfmtChecksumsCached -Destination (Join-Path $payloadRoo
 
 # 2.1. Bundle Maple Mono Nerd Font for terminal icon glyphs.
 # Download and verify the upstream checksum before extracting static TTF files.
-$font = $versions.fonts.mapleMonoNf
+$font = $versions.fonts.mapleMonoNfCn
 $fontChecksumCached = Join-Path $downloadCache ("maple-mono-nf-" + $font.version + ".sha256")
 Invoke-Download -Url $font.checksumUrl -Destination $fontChecksumCached
 $fontSha = (Get-Content -LiteralPath $fontChecksumCached -Raw).Trim()
@@ -318,7 +321,10 @@ foreach ($fontFile in $fontFiles) {
 }
 
 Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/MapleMono-OFL.txt") -Destination (Join-Path $fontDestination "OFL.txt") -Force
-Write-Host "Bundled Maple Mono NF $($font.version): $($fontFiles.Count) TTF files"
+Write-Host "Bundled Maple Mono NF CN $($font.version): $($fontFiles.Count) TTF files"
+
+# Prepare the Python runtime, Tcl LSP, ShellCheck and Verible before npm assembly.
+. (Join-Path $repoRoot "scripts/prepare-language-tools.ps1")
 
 # The npm download cache stores tarballs; npm-install cache stores a complete
 # node_modules tree keyed by package.json + package-lock + npm + target platform.
@@ -670,13 +676,20 @@ Write-JsonNoBom -Path $pluginLockPath -Value $pluginLock
 Copy-Item -LiteralPath (Join-Path $repoRoot "versions.json") -Destination (Join-Path $bundleRoot "manifest/versions.json") -Force
 Copy-Item -LiteralPath $pluginLockPath -Destination (Join-Path $bundleRoot "manifest/plugins.lock.json") -Force
 Copy-Item -LiteralPath $npmLockSource -Destination (Join-Path $bundleRoot "manifest/npm-package-lock.json") -Force
+$pythonLockSource = Join-Path $repoRoot "locks/python/tclint-requirements.txt"
+Copy-Item -LiteralPath $pythonLockSource -Destination (Join-Path $bundleRoot "manifest/tclint-python-requirements.txt") -Force
 
 $buildInfo = @"
 Target: CentOS 7 x86_64
 Minimum glibc: 2.17
 Neovim: $($versions.runtime.neovim.version) (unsupported glibc-2.17 build)
 Node.js: $($versions.runtime.node.version) (linux-x64-glibc-217)
-Maple Mono NF: $($font.version)
+Maple Mono NF CN: $($font.version)
+Python: $($versions.runtime.python.version) (bundled for Tcl LSP)
+Tclint: 0.9.0
+ShellCheck: $($versions.tools.shellcheck.version)
+Verible: $($versions.tools.verible.version)
+uv builder: $uvActual
 npm builder: $npmActual
 Built at: $([DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))
 "@
