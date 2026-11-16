@@ -206,7 +206,7 @@ runtime/tools/bin 中的 Verible 是 Linux x86_64 静态构建；ShellCheck 使�
 |---|---|
 | Python | Pyright：补全、诊断、跳转、引用、重命名 |
 | Bash / Shell | bash-language-server；ShellCheck 诊断；shfmt 格式化 |
-| Tcl / Tk | tclint / tclsp：诊断、语法错误提示、LSP 格式化；tclfmt 格式化 |
+| Tcl / Tk | tclint / tclsp：诊断和语法错误提示；tclfmt 格式化 |
 | SDC / XDC / UPF | 按 Tcl 处理，启用 tclsp 和 tclfmt |
 | CSH / TCSH | Neovim 内置语法高亮和文件类型识别；不安装不成熟的通用 LSP |
 | ICL / IJTAG | 仓库自带 Vim Syntax；.icl 自动识别；仅语法高亮，不需要 LSP |
