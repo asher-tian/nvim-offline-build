@@ -57,7 +57,7 @@ PYTHONPATH="$ROOT/runtime/python-packages" "$ROOT/runtime/python/bin/python3.11"
 
 printf '%s\n' "== Language tool versions =="
 "$ROOT/runtime/tools/bin/shellcheck" --version | sed -n '1,2p'
-"$ROOT/runtime/tools/bin/verible-verilog-format" --version
+printf '%s\n' "module top(input logic clk); endmodule" | "$ROOT/runtime/tools/bin/verible-verilog-format" --stdin_name smoke.sv - >/dev/null
 "$ROOT/runtime/commands/tclint" --version
 
 printf '%s\n' "== Plugin/config smoke test =="
