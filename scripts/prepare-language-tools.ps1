@@ -93,21 +93,21 @@ $pythonCommandShims = @{
 #!/bin/sh
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
-export PYTHONPATH="$ROOT/runtime/python-packages\${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="$ROOT/runtime/python-packages${PYTHONPATH:+:$PYTHONPATH}"
 exec "$ROOT/runtime/python/bin/python3.11" -c 'import sys; from tclint.cli.tclsp import main; sys.exit(main())' "$@"
 '@
     "tclint" = @'
 #!/bin/sh
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
-export PYTHONPATH="$ROOT/runtime/python-packages\${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="$ROOT/runtime/python-packages${PYTHONPATH:+:$PYTHONPATH}"
 exec "$ROOT/runtime/python/bin/python3.11" -c 'import sys; from tclint.cli.tclint import main; sys.exit(main())' "$@"
 '@
     "tclfmt" = @'
 #!/bin/sh
 set -eu
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
-export PYTHONPATH="$ROOT/runtime/python-packages\${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="$ROOT/runtime/python-packages${PYTHONPATH:+:$PYTHONPATH}"
 exec "$ROOT/runtime/python/bin/python3.11" -c 'import sys; from tclint.cli.tclfmt import main; sys.exit(main())' "$@"
 '@
 }
