@@ -193,7 +193,8 @@ runtime/commands 是该 Neovim 安装目录私有的命令目录，不是系统�
 | JavaScript | TypeScript Language Server |
 | TypeScript | TypeScript Language Server |
 | JSON | vscode-json-language-server |
-| Tcl / Tk | Neovim 内置 Tcl 语法高亮；额外识别 `.tm`、`.itcl`、`.tk` 扩展名；没有配置第三方 LSP |\n| CSH / TCSH | Neovim 内置语法和文件类型识别；没有配置第三方 LSP |
+| Tcl / Tk | Neovim 内置 Tcl 语法高亮；额外识别 `.tm`、`.itcl`、`.tk` 扩展名；没有配置第三方 LSP 
+| CSH / TCSH | Neovim 内置语法和文件类型识别；没有配置第三方 LSP |
 | ICL / IJTAG | 仓库自带 Vim Syntax；`.icl` 自动识别；仅语法高亮，不需要 LSP |
 
 Pyright 通过 Node.js 运行。目标机器仍需有可用的 Python 解释器，Pyright 才能分析项目环境和解释器依赖。
