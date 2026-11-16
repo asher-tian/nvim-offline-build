@@ -13,7 +13,7 @@ fail() {
     exit 1
 }
 
-[ -d "$FONT_DIR" ] || fail "Bundled Maple Mono NF fonts not found: $FONT_DIR"
+[ -d "$FONT_DIR" ] || fail "Bundled Maple Mono NF CN fonts not found: $FONT_DIR"
 find "$FONT_DIR" -type f -name '*.ttf' -print -quit | grep -q . || fail "No TTF files found in $FONT_DIR"
 [ "$(id -u)" -eq 0 ] || fail "Run with sudo to register the bundled font system-wide."
 command -v fc-cache >/dev/null 2>&1 || fail "fontconfig is required (fc-cache was not found)."
@@ -30,7 +30,7 @@ EOF
 
 fc-cache -f "$FONT_DIR"
 
-printf '%s\n' "Maple Mono NF is now registered with Fontconfig."
+printf '%s\n' "Maple Mono NF CN is now registered with Fontconfig."
 printf '%s\n' "Font directory: $FONT_DIR"
-printf '%s\n' "Select 'Maple Mono NF' in your terminal profile."
+printf '%s\n' "Select 'Maple Mono NF CN' in your terminal profile."
 printf '%s\n' "Restart the terminal application after changing its font."
