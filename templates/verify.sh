@@ -1,7 +1,9 @@
 #!/bin/sh
 set -eu
 
-ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || true)"
+[ -n "$SCRIPT_PATH" ] || SCRIPT_PATH="$0"
+ROOT="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
 export NVIM_BUNDLE_ROOT="$ROOT"
 export XDG_CONFIG_HOME="$ROOT/config"
 export XDG_DATA_HOME="$ROOT/data"
