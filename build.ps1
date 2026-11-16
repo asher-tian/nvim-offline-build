@@ -293,7 +293,33 @@ $font = $versions.fonts.mapleMonoNf
 $fontChecksumCached = Join-Path $downloadCache ("maple-mono-nf-" + $font.version + ".sha256")
 Invoke-Download -Url $font.checksumUrl -Destination $fontChecksumCached
 $fontSha = (Get-Content -LiteralPath $fontChecksumCached -Raw).Trim()
-if ($fontSha -notmatch '^[0-9a-fA-F]{64}
+if ($fontSha -notmatch '^[0-9a-fA-F]{64}$') {
+    throw "Invalid Maple Mono SHA256 file: $fontChecksumCached"
+}
+
+$fontCached = Join-Path $downloadCache $font.file
+Invoke-Download -Url $font.url -Destination $fontCached -ExpectedSha256 $fontSha
+Assert-Sha256 -Path $fontCached -Expected $fontSha
+
+$fontExtractRoot = Join-Path $workRoot "font-extract"
+if (Test-Path $fontExtractRoot) {
+    Remove-Item -LiteralPath $fontExtractRoot -Recurse -Force
+}
+Expand-Archive -LiteralPath $fontCached -DestinationPath $fontExtractRoot -Force
+$fontFiles = @(Get-ChildItem -LiteralPath $fontExtractRoot -Filter "*.ttf" -File -Recurse)
+if ($fontFiles.Count -eq 0) {
+    throw "Maple Mono NF archive did not contain any TTF files."
+}
+
+$fontDestination = Join-Path $bundleRoot "fonts/maple-mono"
+New-Item -ItemType Directory -Force -Path $fontDestination | Out-Null
+foreach ($fontFile in $fontFiles) {
+    Copy-Item -LiteralPath $fontFile.FullName -Destination $fontDestination -Force
+}
+
+Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/MapleMono-OFL.txt") -Destination (Join-Path $fontDestination "OFL.txt") -Force
+Write-Host "Bundled Maple Mono NF $($font.version): $($fontFiles.Count) TTF files"
+
 # The npm download cache stores tarballs; npm-install cache stores a complete
 # node_modules tree keyed by package.json + package-lock + npm + target platform.
 $packageJsonSource = Join-Path $repoRoot "package.json"
@@ -650,6 +676,7 @@ Target: CentOS 7 x86_64
 Minimum glibc: 2.17
 Neovim: $($versions.runtime.neovim.version) (unsupported glibc-2.17 build)
 Node.js: $($versions.runtime.node.version) (linux-x64-glibc-217)
+Maple Mono NF: $($font.version)
 npm builder: $npmActual
 Built at: $([DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))
 "@
