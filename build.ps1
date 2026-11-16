@@ -63,11 +63,43 @@ foreach ($directory in @($downloadCache, $npmDownloadCache, $npmInstallCache, $p
     New-Item -ItemType Directory -Force -Path $directory | Out-Null
 }
 
-# One-time migration: reuse artifacts produced by the previous build layout
-# before discarding work/. This avoids downloading everything again immediately
-# after upgrading the build scripts.
-if ((-not $Clean) -and (Test-Path $workRoot)) {
-    $legacyPayload = Join-Path $workRoot "bundle/payload"
+$outputFullPath = [System.IO.Path]::GetFullPath($OutputDirectory)
+$archiveName = "nvim-centos7-x86_64-node$($versions.runtime.node.version).tar.gz"
+
+# One-time migration: reuse artifacts produced by the previous build layout.
+# Prefer the previous work tree; if it is incomplete, seed the cache from the
+# last successfully generated archive in OutputDirectory.
+if (-not $Clean) {
+    $legacyBundleRoot = Join-Path $workRoot "bundle"
+    $legacyNpmRoot = Join-Path $workRoot "npm"
+    $legacyBundleLock = Join-Path $legacyBundleRoot "manifest/plugins.lock.json"
+
+    if (-not (Test-Path $legacyBundleLock)) {
+        $legacyArchive = Join-Path $outputFullPath $archiveName
+        if (Test-Path $legacyArchive) {
+            $legacyExtractRoot = Join-Path $workRoot "legacy-cache-seed"
+            if (Test-Path $legacyExtractRoot) {
+                Remove-Item -LiteralPath $legacyExtractRoot -Recurse -Force
+            }
+            New-Item -ItemType Directory -Force -Path $legacyExtractRoot | Out-Null
+            Write-Host "Seeding build cache from previous archive: $legacyArchive"
+            & tar.exe -xzf $legacyArchive -C $legacyExtractRoot
+            if ($LASTEXITCODE -eq 0) {
+                $legacyBundleRoot = $legacyExtractRoot
+            } else {
+                Write-Warning "Could not extract the previous archive for cache migration; a normal build will populate the cache."
+            }
+        }
+    }
+
+    if (-not (Test-Path (Join-Path $legacyNpmRoot "node_modules"))) {
+        $bundleNpmCandidate = Join-Path $legacyBundleRoot "runtime/npm"
+        if (Test-Path (Join-Path $bundleNpmCandidate "node_modules")) {
+            $legacyNpmRoot = $bundleNpmCandidate
+        }
+    }
+
+    $legacyPayload = Join-Path $legacyBundleRoot "payload"
     if (Test-Path $legacyPayload) {
         foreach ($legacyFile in Get-ChildItem -LiteralPath $legacyPayload -File -Force) {
             $cachedFile = Join-Path $downloadCache $legacyFile.Name
@@ -138,8 +170,8 @@ if ((-not $Clean) -and (Test-Path $workRoot)) {
 
     # Previous bundles already contained plugin trees checked out at the
     # commits recorded in locks/plugins.lock.json. Preserve them as snapshots.
-    $legacyPluginRoot = Join-Path $workRoot "bundle/data/nvim/site/pack/offline/start"
-    $legacyPluginLock = Join-Path $workRoot "bundle/manifest/plugins.lock.json"
+    $legacyPluginRoot = Join-Path $legacyBundleRoot "data/nvim/site/pack/offline/start"
+    $legacyPluginLock = Join-Path $legacyBundleRoot "manifest/plugins.lock.json"
     if ((Test-Path $legacyPluginRoot) -and (Test-Path $legacyPluginLock)) {
         $legacyPluginEntries = (Get-Content -LiteralPath $legacyPluginLock -Raw | ConvertFrom-Json).plugins
         foreach ($legacyPlugin in $legacyPluginEntries) {
@@ -607,7 +639,6 @@ Write-Utf8Lf -Path (Join-Path $bundleRoot "manifest/SHA256SUMS.txt") -Content ([
 
 # 6. Package the bundle. The archive contains the contents of the bundle root,
 # so it can be extracted directly into the chosen installation directory.
-$outputFullPath = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $outputFullPath | Out-Null
 $archivePath = Join-Path $outputFullPath "nvim-centos7-x86_64-node22.23.5.tar.gz"
 
