@@ -172,7 +172,7 @@ nvim/
 │   │       └── icl.vim          # IEEE 1687 ICL 语法高亮
 │   └── npmrc                    # 私有 npm 配置
 ├── fonts/maple-mono/            # Maple Mono NF CN 静态 TTF + OFL license
-├── licenses/                    # 第三方工具许可证
+├── licenses/                    # 第三方工具许可证及 ShellCheck GPL 源码
 ├── install-fonts.sh             # 可选：注册系统字体
 ├── uninstall-fonts.sh           # 可选：移除字体注册
 ├── data/nvim/site/pack/          # 插件
