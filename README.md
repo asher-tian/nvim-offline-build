@@ -194,6 +194,7 @@ runtime/commands 是该 Neovim 安装目录私有的命令目录，不是系统�
 | TypeScript | TypeScript Language Server |
 | JSON | vscode-json-language-server |
 | Tcl / Tk | Neovim 内置 Tcl 语法高亮；额外识别 `.tm`、`.itcl`、`.tk` 扩展名；没有配置第三方 LSP |\n| CSH / TCSH | Neovim 内置语法和文件类型识别；没有配置第三方 LSP |
+| ICL / IJTAG | 仓库自带 Vim Syntax；`.icl` 自动识别；仅语法高亮，不需要 LSP |
 
 Pyright 通过 Node.js 运行。目标机器仍需有可用的 Python 解释器，Pyright 才能分析项目环境和解释器依赖。
 
@@ -234,6 +235,7 @@ sudo bash uninstall-fonts.sh
 - 所有 npm 语言服务器和插件在 Windows 构建时准备。
 - Node.js、Neovim、ripgrep、shfmt 的 Linux 目标文件在 Windows 侧下载原始归档，保留原始归档，在 CentOS 解压。
 - Tcl/Tk 使用 Neovim 自带 Tcl 语法高亮；额外识别 .tm、.itcl、.tk，并设置 4 空格缩进。它不是 Tcl LSP。
+- ICL（IEEE 1687 IJTAG）使用仓库自带 Vim Syntax，仅提供语法高亮，不安装 LSP 或额外运行时。
 - CSH/TCSH 当前提供语法识别，不宣称具备成熟 LSP 能力。
 
 ## 完整性
