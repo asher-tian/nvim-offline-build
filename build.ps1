@@ -253,6 +253,7 @@ Copy-Item -Path (Join-Path $repoRoot "templates/install.sh") -Destination (Join-
 Copy-Item -Path (Join-Path $repoRoot "templates/verify.sh") -Destination (Join-Path $bundleRoot "verify.sh") -Force
 Copy-Item -Path (Join-Path $repoRoot "templates/install-fonts.sh") -Destination (Join-Path $bundleRoot "install-fonts.sh") -Force
 Copy-Item -Path (Join-Path $repoRoot "templates/uninstall-fonts.sh") -Destination (Join-Path $bundleRoot "uninstall-fonts.sh") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "README.md") -Destination (Join-Path $bundleRoot "README.md") -Force
 Copy-Item -Path (Join-Path $repoRoot "templates/npmrc") -Destination (Join-Path $bundleRoot "config/npmrc") -Force
 
 # 1. Download Linux runtime archives into the persistent cache.
