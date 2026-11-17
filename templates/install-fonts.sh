@@ -31,8 +31,8 @@ usage() {
 Usage:
   bash install-fonts.sh [--user|--system]
 
-Default mode is --user. Font files are copied to:
-  ~/.local/share/fonts/nvim-offline-build
+Default mode is --user. The single Regular font file is copied to:
+  ~/.local/share/fonts/nvim-offline-build/MapleMono-NF-CN-Regular.ttf
 
 --system registers the bundled fonts for all users and requires root.
 EOF
@@ -56,7 +56,8 @@ case "$#" in
 esac
 
 [ -d "$FONT_SOURCE_DIR" ] || fail "Bundled Maple Mono NF CN fonts not found: $FONT_SOURCE_DIR"
-find "$FONT_SOURCE_DIR" -type f -name '*.ttf' -print -quit | grep -q . || fail "No TTF files found in $FONT_SOURCE_DIR"
+FONT_FILE="$FONT_SOURCE_DIR/MapleMono-NF-CN-Regular.ttf"
+[ -f "$FONT_FILE" ] || fail "Required font file not found: $FONT_FILE"
 command -v fc-cache >/dev/null 2>&1 || fail "fontconfig is required (fc-cache was not found)."
 command -v fc-list >/dev/null 2>&1 || fail "fontconfig is required (fc-list was not found)."
 
@@ -215,19 +216,12 @@ if [ -f "$USER_FONT_MANIFEST" ]; then
     done < "$USER_FONT_MANIFEST"
 fi
 
-manifest_tmp="$USER_FONT_MANIFEST.tmp.$$"
+manifest_tmp="$USER_FONT_MANIFEST.tmp.$"
 : > "$manifest_tmp"
-font_count=0
-for source_file in "$FONT_SOURCE_DIR"/*.ttf; do
-    [ -f "$source_file" ] || continue
-    font_name="$(basename "$source_file")"
-    cp -f "$source_file" "$USER_FONT_DIR/$font_name"
-    chmod 644 "$USER_FONT_DIR/$font_name"
-    printf '%s\n' "$font_name" >> "$manifest_tmp"
-    font_count=$((font_count + 1))
-done
-
-[ "$font_count" -gt 0 ] || fail "No TTF files were copied."
+font_name="$(basename "$FONT_FILE")"
+cp -f "$FONT_FILE" "$USER_FONT_DIR/$font_name"
+chmod 644 "$USER_FONT_DIR/$font_name"
+printf '%s\n' "$font_name" >> "$manifest_tmp"
 if [ -f "$FONT_SOURCE_DIR/OFL.txt" ]; then
     cp -f "$FONT_SOURCE_DIR/OFL.txt" "$USER_FONT_DIR/OFL.txt"
     chmod 644 "$USER_FONT_DIR/OFL.txt"
