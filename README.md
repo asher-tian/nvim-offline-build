@@ -122,10 +122,12 @@ cd /data/devtools/nvim
 bash install-fonts.sh
 ~~~
 
-字体文件会复制到：
+只安装一个字体文件：`MapleMono-NF-CN-Regular.ttf`，包含中文字符和 Nerd Font 图标，不安装其他字重或斜体变体。文件复制到：
 
 ~~~text
 ~/.local/share/fonts/nvim-offline-build/
+├── MapleMono-NF-CN-Regular.ttf
+└── OFL.txt
 ~~~
 
 脚本只管理这个独立目录，不修改系统字体目录，也不会覆盖 HOME 中的其他字体。CentOS 7 的旧版 Fontconfig 如果不扫描 `~/.local/share/fonts`，脚本会额外创建兼容软链接 `~/.fonts/nvim-offline-build`。Fontconfig 缓存由系统生成在用户缓存目录中。
@@ -145,7 +147,7 @@ fc-match 'Maple Mono NF CN'
 bash uninstall-fonts.sh
 ~~~
 
-卸载只删除本工具安装的字体文件和必要的兼容软链接；如果字体目录中存在其他文件，会保留该目录及其中的文件。
+卸载只删除本工具安装的 Regular 字体文件和必要的兼容软链接；如果字体目录中存在其他文件，会保留该目录及其中的文件。
 
 如需为整台机器的所有用户注册字体（需要 root），仍可使用：
 
