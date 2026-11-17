@@ -5,12 +5,16 @@ SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || true)"
 [ -n "$SCRIPT_PATH" ] || SCRIPT_PATH="$0"
 ROOT="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
 
-FONT_DIR="$ROOT/fonts/maple-mono"
+FONT_SOURCE_DIR="$ROOT/fonts/maple-mono"
 FONT_FAMILY="Maple Mono NF CN"
-BUNDLE_CONFIG_DIR="$ROOT/config/fontconfig/conf.d"
-BUNDLE_CONFIG="$BUNDLE_CONFIG_DIR/99-nvim-offline-build.conf"
-CACHE_DIR="$ROOT/cache/fontconfig"
+USER_FONT_DIR="$HOME/.local/share/fonts/nvim-offline-build"
+USER_FONT_MARKER="$USER_FONT_DIR/.nvim-offline-build-managed"
+USER_FONT_MANIFEST="$USER_FONT_DIR/.nvim-offline-build-files"
+USER_FONT_LINK="$HOME/.fonts/nvim-offline-build"
 STATE_DIR="$ROOT/state/fontconfig"
+STATE_FONT_DIR="$STATE_DIR/user-font-dir"
+CACHE_DIR="$ROOT/cache/fontconfig"
+BUNDLE_CONFIG="$ROOT/config/fontconfig/conf.d/99-nvim-offline-build.conf"
 SYSTEM_CONF_DIR="/etc/fonts/conf.d"
 SYSTEM_CONF="$SYSTEM_CONF_DIR/99-nvim-offline-build-fonts.conf"
 
@@ -28,8 +32,10 @@ usage() {
 Usage:
   bash install-fonts.sh [--user|--system]
 
-Default mode is --user and does not require root.
---system registers the bundled font for all users and requires root.
+Default mode is --user. Font files are copied to:
+  ~/.local/share/fonts/nvim-offline-build
+
+--system registers the bundled fonts for all users and requires root.
 EOF
 }
 
@@ -50,8 +56,8 @@ case "$#" in
         ;;
 esac
 
-[ -d "$FONT_DIR" ] || fail "Bundled Maple Mono NF CN fonts not found: $FONT_DIR"
-find "$FONT_DIR" -type f -name '*.ttf' -print -quit | grep -q . || fail "No TTF files found in $FONT_DIR"
+[ -d "$FONT_SOURCE_DIR" ] || fail "Bundled Maple Mono NF CN fonts not found: $FONT_SOURCE_DIR"
+find "$FONT_SOURCE_DIR" -type f -name '*.ttf' -print -quit | grep -q . || fail "No TTF files found in $FONT_SOURCE_DIR"
 command -v fc-cache >/dev/null 2>&1 || fail "fontconfig is required (fc-cache was not found)."
 command -v fc-list >/dev/null 2>&1 || fail "fontconfig is required (fc-list was not found)."
 
@@ -62,11 +68,9 @@ xml_escape() {
         -e 's/>/\&gt;/g'
 }
 
-write_config() {
+write_system_config() {
     config_path="$1"
-    include_cache="$2"
-    xml_font_dir="$(xml_escape "$FONT_DIR")"
-    xml_cache_dir="$(xml_escape "$CACHE_DIR")"
+    xml_font_dir="$(xml_escape "$FONT_SOURCE_DIR")"
 
     mkdir -p "$(dirname "$config_path")"
     [ ! -L "$config_path" ] || fail "Refusing to replace a Fontconfig symlink: $config_path"
@@ -81,9 +85,6 @@ write_config() {
         printf '%s\n' '<fontconfig>'
         printf '%s\n' '  <!-- Managed by nvim-offline-build. -->'
         printf '  <dir>%s</dir>\n' "$xml_font_dir"
-        if [ "$include_cache" = "yes" ]; then
-            printf '  <cachedir>%s</cachedir>\n' "$xml_cache_dir"
-        fi
         printf '%s\n' '</fontconfig>'
     } > "$temp_file"
     mv -f "$temp_file" "$config_path"
@@ -107,14 +108,40 @@ ensure_symlink() {
     SYMLINK_CREATED=1
 }
 
+remove_managed_symlink() {
+    link_path="$1"
+    expected_target="$2"
+
+    if [ -L "$link_path" ]; then
+        current_target="$(readlink -f "$link_path" 2>/dev/null || true)"
+        if [ "$current_target" = "$expected_target" ]; then
+            rm -f "$link_path"
+            info "Removed legacy registration link: $link_path"
+        fi
+    fi
+}
+
+remove_legacy_state_link() {
+    state_file="$1"
+    expected_target="$2"
+
+    if [ -f "$state_file" ]; then
+        old_link="$(cat "$state_file")"
+        [ -n "$old_link" ] && remove_managed_symlink "$old_link" "$expected_target"
+        rm -f "$state_file"
+    fi
+}
+
 font_is_registered() {
+    expected_dir="$1"
     listed_files="$(fc-list -f '%{file}\n' 2>/dev/null || true)"
     found=0
+
     while IFS= read -r listed_file; do
         [ -n "$listed_file" ] || continue
         resolved_file="$(readlink -f "$listed_file" 2>/dev/null || true)"
         case "$resolved_file" in
-            "$FONT_DIR"/*)
+            "$expected_dir"/*)
                 found=1
                 break
                 ;;
@@ -122,85 +149,106 @@ font_is_registered() {
     done <<EOF
 $listed_files
 EOF
+
     [ "$found" -eq 1 ]
 }
 
 if [ "$MODE" = "system" ]; then
     [ "$(id -u)" -eq 0 ] || fail "System font registration requires root. Run: sudo bash install-fonts.sh --system"
-    write_config "$SYSTEM_CONF" "no"
-    fc-cache -f "$FONT_DIR"
-    font_is_registered || fail "Fontconfig did not register fonts from $FONT_DIR. Check /etc/fonts/conf.d/50-user.conf and Fontconfig logs."
+    write_system_config "$SYSTEM_CONF"
+    fc-cache -f "$FONT_SOURCE_DIR"
+    font_is_registered "$FONT_SOURCE_DIR" || fail "Fontconfig did not register fonts from $FONT_SOURCE_DIR."
     info "System font registration completed."
-    info "Font directory: $FONT_DIR"
+    info "Font directory: $FONT_SOURCE_DIR"
     info "Select '$FONT_FAMILY' in your terminal profile, then restart the terminal."
     exit 0
 fi
 
-[ -n "${HOME:-}" ] || fail "HOME is not set."
+[ -n "$HOME" ] || fail "HOME is not set."
 [ -d "$HOME" ] || fail "HOME directory does not exist: $HOME"
-[ -w "$ROOT" ] || fail "The Neovim installation directory is not writable: $ROOT"
+[ -w "$HOME" ] || fail "HOME is not writable: $HOME"
 
-CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-case "$CONFIG_HOME" in
-    /*) ;;
-    *) fail "XDG_CONFIG_HOME must be an absolute path: $CONFIG_HOME" ;;
-esac
-case "$CACHE_HOME" in
-    /*) ;;
-    *) fail "XDG_CACHE_HOME must be an absolute path: $CACHE_HOME" ;;
-esac
+# Remove registration links created by older versions, but only when they
+# still point to this bundle. Existing user configuration is never replaced.
+remove_legacy_state_link "$STATE_DIR/user-config-link" "$BUNDLE_CONFIG"
+remove_legacy_state_link "$STATE_DIR/user-font-link" "$FONT_SOURCE_DIR"
+remove_legacy_state_link "$STATE_DIR/user-cache-link" "$CACHE_DIR"
+remove_managed_symlink "$USER_FONT_LINK" "$FONT_SOURCE_DIR"
 
-mkdir -p "$BUNDLE_CONFIG_DIR" "$CACHE_DIR" "$STATE_DIR"
-write_config "$BUNDLE_CONFIG" "yes"
-
-USER_CONFIG_LINK="$CONFIG_HOME/fontconfig/conf.d/99-nvim-offline-build.conf"
-if [ "$USER_CONFIG_LINK" != "$BUNDLE_CONFIG" ]; then
-    ensure_symlink "$BUNDLE_CONFIG" "$USER_CONFIG_LINK"
-    if [ "$SYMLINK_CREATED" -eq 1 ]; then
-        printf '%s\n' "$USER_CONFIG_LINK" > "$STATE_DIR/user-config-link"
-    fi
+if [ -f "$BUNDLE_CONFIG" ] && grep -q 'Managed by nvim-offline-build' "$BUNDLE_CONFIG"; then
+    rm -f "$BUNDLE_CONFIG"
 fi
 
-# Redirect the Fontconfig cache only when no existing cache directory is
-# present. This keeps the HOME footprint to a symlink without replacing data.
-USER_CACHE_LINK="$CACHE_HOME/fontconfig"
-if [ "$USER_CACHE_LINK" != "$CACHE_DIR" ]; then
-    if [ -L "$USER_CACHE_LINK" ]; then
-        current_cache_target="$(readlink -f "$USER_CACHE_LINK" 2>/dev/null || true)"
-        if [ "$current_cache_target" = "$CACHE_DIR" ]; then
-            :
-        else
-            info "Keeping existing Fontconfig cache symlink: $USER_CACHE_LINK"
-        fi
-    elif [ -e "$USER_CACHE_LINK" ]; then
-        info "Keeping existing Fontconfig cache directory: $USER_CACHE_LINK"
-    else
-        ensure_symlink "$CACHE_DIR" "$USER_CACHE_LINK"
-        if [ "$SYMLINK_CREATED" -eq 1 ]; then
-            printf '%s\n' "$USER_CACHE_LINK" > "$STATE_DIR/user-cache-link"
-        fi
-    fi
+mkdir -p "$(dirname "$USER_FONT_DIR")"
+
+if [ -L "$USER_FONT_DIR" ]; then
+    fail "Refusing to install fonts through a symlink: $USER_FONT_DIR"
 fi
 
-fc-cache -f "$FONT_DIR"
-
-# Some older CentOS Fontconfig installations do not load per-user conf.d
-# snippets. Fall back to the long-supported ~/.fonts directory symlink.
-if ! font_is_registered; then
-    USER_FONT_LINK="$HOME/.fonts/nvim-offline-build"
-    ensure_symlink "$FONT_DIR" "$USER_FONT_LINK"
-    if [ "$SYMLINK_CREATED" -eq 1 ]; then
-        printf '%s\n' "$USER_FONT_LINK" > "$STATE_DIR/user-font-link"
+if [ -e "$USER_FONT_DIR" ]; then
+    [ -d "$USER_FONT_DIR" ] || fail "Font destination exists and is not a directory: $USER_FONT_DIR"
+    if [ -L "$USER_FONT_MARKER" ]; then
+        fail "Refusing to use a symlink marker: $USER_FONT_MARKER"
     fi
-    fc-cache -f "$FONT_DIR"
+    if [ -f "$USER_FONT_MARKER" ]; then
+        [ "$(cat "$USER_FONT_MARKER")" = "Managed by nvim-offline-build" ] || fail "Unrecognized font directory marker: $USER_FONT_MARKER"
+    elif find "$USER_FONT_DIR" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
+        fail "Font destination already contains files and is not managed by this installer: $USER_FONT_DIR"
+    fi
+else
+    mkdir -p "$USER_FONT_DIR"
 fi
 
-font_is_registered || fail "Fontconfig still cannot see the bundled fonts. Check that the desktop session uses Fontconfig and that $ROOT is readable."
+# Remove only files listed by our previous manifest. Any unrelated files
+# manually placed in this dedicated directory are preserved.
+if [ -f "$USER_FONT_MANIFEST" ]; then
+    while IFS= read -r old_file; do
+        [ -n "$old_file" ] || continue
+        case "$old_file" in
+            */*|.|..) fail "Invalid entry in managed font manifest: $old_file" ;;
+        esac
+        rm -f "$USER_FONT_DIR/$old_file"
+    done < "$USER_FONT_MANIFEST"
+fi
 
-info "User font registration completed without root."
-info "Font files: $FONT_DIR"
-info "Fontconfig config: $BUNDLE_CONFIG"
-info "Fontconfig cache: $CACHE_DIR"
-info "No font files are copied into HOME; registration links are small, and pre-existing cache paths are left untouched."
+manifest_tmp="$USER_FONT_MANIFEST.tmp.$$"
+: > "$manifest_tmp"
+font_count=0
+for source_file in "$FONT_SOURCE_DIR"/*.ttf; do
+    [ -f "$source_file" ] || continue
+    font_name="$(basename "$source_file")"
+    cp -f "$source_file" "$USER_FONT_DIR/$font_name"
+    chmod 644 "$USER_FONT_DIR/$font_name"
+    printf '%s\n' "$font_name" >> "$manifest_tmp"
+    font_count=$((font_count + 1))
+done
+
+[ "$font_count" -gt 0 ] || fail "No TTF files were copied."
+if [ -f "$FONT_SOURCE_DIR/OFL.txt" ]; then
+    cp -f "$FONT_SOURCE_DIR/OFL.txt" "$USER_FONT_DIR/OFL.txt"
+    chmod 644 "$USER_FONT_DIR/OFL.txt"
+    printf '%s\n' "OFL.txt" >> "$manifest_tmp"
+fi
+
+mv -f "$manifest_tmp" "$USER_FONT_MANIFEST"
+printf '%s\n' "Managed by nvim-offline-build" > "$USER_FONT_MARKER"
+
+# Fontconfig normally scans ~/.local/share/fonts. Older CentOS 7 builds may
+# only scan ~/.fonts, so create a compatibility link only when required.
+fc-cache -f "$USER_FONT_DIR"
+if ! font_is_registered "$USER_FONT_DIR"; then
+    ensure_symlink "$USER_FONT_DIR" "$USER_FONT_LINK"
+    fc-cache -f "$USER_FONT_DIR"
+fi
+
+font_is_registered "$USER_FONT_DIR" || fail "Fontconfig still cannot see fonts in $USER_FONT_DIR."
+
+mkdir -p "$STATE_DIR"
+state_tmp="$STATE_FONT_DIR.tmp.$$"
+printf '%s\n' "$USER_FONT_DIR" > "$state_tmp"
+mv -f "$state_tmp" "$STATE_FONT_DIR"
+
+info "User font installation completed without root."
+info "Font files: $USER_FONT_DIR"
+info "Fontconfig cache: $HOME/.cache/fontconfig"
 info "Select '$FONT_FAMILY' in your terminal profile, then restart the terminal."
