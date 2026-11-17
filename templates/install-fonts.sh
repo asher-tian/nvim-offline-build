@@ -12,7 +12,6 @@ USER_FONT_MARKER="$USER_FONT_DIR/.nvim-offline-build-managed"
 USER_FONT_MANIFEST="$USER_FONT_DIR/.nvim-offline-build-files"
 USER_FONT_LINK="$HOME/.fonts/nvim-offline-build"
 STATE_DIR="$ROOT/state/fontconfig"
-STATE_FONT_DIR="$STATE_DIR/user-font-dir"
 CACHE_DIR="$ROOT/cache/fontconfig"
 BUNDLE_CONFIG="$ROOT/config/fontconfig/conf.d/99-nvim-offline-build.conf"
 SYSTEM_CONF_DIR="/etc/fonts/conf.d"
@@ -128,7 +127,9 @@ remove_legacy_state_link() {
     if [ -f "$state_file" ]; then
         old_link="$(cat "$state_file")"
         [ -n "$old_link" ] && remove_managed_symlink "$old_link" "$expected_target"
-        rm -f "$state_file"
+        if [ -w "$STATE_DIR" ]; then
+            rm -f "$state_file"
+        fi
     fi
 }
 
@@ -175,8 +176,11 @@ remove_legacy_state_link "$STATE_DIR/user-font-link" "$FONT_SOURCE_DIR"
 remove_legacy_state_link "$STATE_DIR/user-cache-link" "$CACHE_DIR"
 remove_managed_symlink "$USER_FONT_LINK" "$FONT_SOURCE_DIR"
 
-if [ -f "$BUNDLE_CONFIG" ] && grep -q 'Managed by nvim-offline-build' "$BUNDLE_CONFIG"; then
+if [ -f "$BUNDLE_CONFIG" ] && grep -q 'Managed by nvim-offline-build' "$BUNDLE_CONFIG" && [ -w "$(dirname "$BUNDLE_CONFIG")" ]; then
     rm -f "$BUNDLE_CONFIG"
+fi
+if [ -d "$STATE_DIR" ] && [ -w "$STATE_DIR" ]; then
+    rmdir "$STATE_DIR" 2>/dev/null || true
 fi
 
 mkdir -p "$(dirname "$USER_FONT_DIR")"
@@ -242,11 +246,6 @@ if ! font_is_registered "$USER_FONT_DIR"; then
 fi
 
 font_is_registered "$USER_FONT_DIR" || fail "Fontconfig still cannot see fonts in $USER_FONT_DIR."
-
-mkdir -p "$STATE_DIR"
-state_tmp="$STATE_FONT_DIR.tmp.$$"
-printf '%s\n' "$USER_FONT_DIR" > "$state_tmp"
-mv -f "$state_tmp" "$STATE_FONT_DIR"
 
 info "User font installation completed without root."
 info "Font files: $USER_FONT_DIR"
