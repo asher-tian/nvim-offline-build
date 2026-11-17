@@ -10,6 +10,10 @@ map("n", "<leader>fg", "<cmd>Telescope live_grep<CR>", { desc = "Search in files
 map("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { desc = "Find buffers" })
 map("n", "<leader>fh", "<cmd>Telescope help_tags<CR>", { desc = "Search help" })
 
+-- LSP navigation
+map("n", "gd", vim.lsp.buf.definition, { desc = "LSP: Go to definition" })
+map("n", "gD", vim.lsp.buf.declaration, { desc = "LSP: Go to declaration" })
+
 map("n", "<leader>f", function()
     require("conform").format({ async = true, lsp_format = "fallback" })
 end, { desc = "Format buffer" })
