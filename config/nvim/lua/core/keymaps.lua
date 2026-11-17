@@ -14,7 +14,7 @@ map("n", "<leader>fh", "<cmd>Telescope help_tags<CR>", { desc = "Search help" })
 map("n", "gd", vim.lsp.buf.definition, { desc = "LSP: Go to definition" })
 map("n", "gD", vim.lsp.buf.declaration, { desc = "LSP: Go to declaration" })
 
-map("n", "<leader>f", function()
+map("n", "<leader>cf", function()
     require("conform").format({ async = true, lsp_format = "fallback" })
 end, { desc = "Format buffer" })
 

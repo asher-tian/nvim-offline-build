@@ -90,7 +90,7 @@ bash install.sh
 ./nvim
 ~~~
 
-安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。 启动脚本会清理继承的 `VIMRUNTIME` 环境变量，避免系统 Vim（例如 Vim 8.2）的 Runtime 文件干扰这套独立 Neovim。
+安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。 启动脚本会清理继承的 `VIM`、`VIMRUNTIME`、`VIMINIT`、`EXINIT`、`MYVIMRC` 和 `MYGVIMRC` 环境变量，避免系统 Vim（例如 Vim 8.2）的 Runtime 路径或初始化配置干扰这套独立 Neovim。`VIM_PATH` 不是 Vim/Neovim 标准环境变量，无需专门处理。
 
 ## 3. Python 环境配置
 
@@ -250,7 +250,7 @@ Telescope 搜索时输入关键词即可模糊匹配；按 `Enter` 打开结果�
 
 ### 格式化
 
-- `Space f`：格式化当前文件。
+- `Space cf`：格式化当前文件。
 - 已配置自动保存格式化的文件类型：JavaScript / TypeScript、JSON、HTML、CSS / SCSS、YAML、Markdown、Bash、Tcl、Verilog / SystemVerilog。
 - Python 当前没有配置 Conform Formatter；不要将 `Space f` 理解为已配置 Python 格式化。
 

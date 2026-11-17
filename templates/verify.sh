@@ -94,8 +94,17 @@ printf '#!/usr/bin/env bash\necho "$HOME"\n' | "$ROOT/runtime/tools/bin/shellche
 
 printf '%s\n' "== Plugin/config smoke test =="
 [ ! -d "$ROOT/data/nvim/site/pack/offline/start/venv-selector.nvim" ] || fail "Removed plugin venv-selector.nvim is still installed."
-VIMRUNTIME="/usr/share/vim/vim82" "$ROOT/nvim" --headless \
+VIM="/usr/share/vim" \
+VIMRUNTIME="/usr/share/vim/vim82" \
+VIMINIT="set number" \
+EXINIT="set relativenumber" \
+MYVIMRC="/etc/vimrc" \
+MYGVIMRC="/etc/gvimrc" \
+"$ROOT/nvim" --headless \
+    -c 'lua assert(vim.env.VIM == nil)' \
     -c 'lua assert(vim.env.VIMRUNTIME == nil)' \
+    -c 'lua assert(vim.env.VIMINIT == nil)' \
+    -c 'lua assert(vim.env.EXINIT == nil)' \
     -c 'lua assert(require("cmp"))' \
     -c 'lua assert(require("telescope"))' \
     -c 'lua assert(require("nvim-tree"))' \
@@ -111,6 +120,8 @@ VIMRUNTIME="/usr/share/vim/vim82" "$ROOT/nvim" --headless \
     -c 'lua assert(vim.fn.maparg("gra", "n") ~= "")' \
     -c 'lua assert(vim.fn.maparg("gri", "n") ~= "")' \
     -c 'lua assert(vim.fn.maparg("gr", "n") == "")' \
+    -c 'lua assert(vim.fn.maparg(" cf", "n") ~= "")' \
+    -c 'lua assert(vim.fn.maparg(" f", "n") == "")' \
     -c 'setlocal filetype=python' \
     -c 'lua assert(vim.bo.commentstring == "# %s")' \
     -c 'lua assert(vim.filetype.match({filename = "sample.icl"}) == "icl")' \

@@ -7,8 +7,8 @@ ROOT="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
 
 export NVIM_BUNDLE_ROOT="$ROOT"
 
-# Prevent a system Vim installation from overriding Neovim runtime files.
-unset VIMRUNTIME
+# Isolate Neovim from inherited system Vim configuration and runtime paths.
+unset VIM VIMRUNTIME VIMINIT EXINIT MYVIMRC MYGVIMRC
 
 export XDG_CONFIG_HOME="$ROOT/config"
 export XDG_DATA_HOME="$ROOT/data"
