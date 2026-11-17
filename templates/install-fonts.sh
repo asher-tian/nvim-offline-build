@@ -190,44 +190,19 @@ if [ -L "$USER_FONT_DIR" ]; then
     fail "Refusing to install fonts through a symlink: $USER_FONT_DIR"
 fi
 
+# This is a dedicated installation directory. Replace it on every run so
+# stale font weights or files from previous installations cannot remain.
 if [ -e "$USER_FONT_DIR" ]; then
     [ -d "$USER_FONT_DIR" ] || fail "Font destination exists and is not a directory: $USER_FONT_DIR"
-    if [ -L "$USER_FONT_MARKER" ]; then
-        fail "Refusing to use a symlink marker: $USER_FONT_MARKER"
-    fi
-    if [ -f "$USER_FONT_MARKER" ]; then
-        [ "$(cat "$USER_FONT_MARKER")" = "Managed by nvim-offline-build" ] || fail "Unrecognized font directory marker: $USER_FONT_MARKER"
-    elif find "$USER_FONT_DIR" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
-        fail "Font destination already contains files and is not managed by this installer: $USER_FONT_DIR"
-    fi
-else
-    mkdir -p "$USER_FONT_DIR"
+    rm -rf "$USER_FONT_DIR"
 fi
+mkdir -p "$USER_FONT_DIR"
 
-# Remove only files listed by our previous manifest. Any unrelated files
-# manually placed in this dedicated directory are preserved.
-if [ -f "$USER_FONT_MANIFEST" ]; then
-    while IFS= read -r old_file; do
-        [ -n "$old_file" ] || continue
-        case "$old_file" in
-            */*|.|..) fail "Invalid entry in managed font manifest: $old_file" ;;
-        esac
-        rm -f "$USER_FONT_DIR/$old_file"
-    done < "$USER_FONT_MANIFEST"
-fi
-
-manifest_tmp="$USER_FONT_MANIFEST.tmp.$"
-: > "$manifest_tmp"
+manifest_tmp="$USER_FONT_MANIFEST.tmp.$$"
 font_name="$(basename "$FONT_FILE")"
 cp -f "$FONT_FILE" "$USER_FONT_DIR/$font_name"
 chmod 644 "$USER_FONT_DIR/$font_name"
-printf '%s\n' "$font_name" >> "$manifest_tmp"
-if [ -f "$FONT_SOURCE_DIR/OFL.txt" ]; then
-    cp -f "$FONT_SOURCE_DIR/OFL.txt" "$USER_FONT_DIR/OFL.txt"
-    chmod 644 "$USER_FONT_DIR/OFL.txt"
-    printf '%s\n' "OFL.txt" >> "$manifest_tmp"
-fi
-
+printf '%s\n' "$font_name" > "$manifest_tmp"
 mv -f "$manifest_tmp" "$USER_FONT_MANIFEST"
 printf '%s\n' "Managed by nvim-offline-build" > "$USER_FONT_MARKER"
 
