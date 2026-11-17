@@ -30,11 +30,26 @@ tar --version
 .\build.ps1
 ~~~
 
+如果当前 PowerShell 没有启用 mise 自动激活，可显式通过 mise 启动构建：
+
+~~~powershell
+mise exec -- powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
+~~~
+
+使用 PowerShell 7 时，将命令中的 powershell 替换为 pwsh。
+
 首次构建会下载 Linux 运行时、字体、语言工具和插件，并生成依赖锁文件。将首次构建生成或更新的以下文件提交到 Git：
 
 - locks/npm/package-lock.json
 - locks/python/tclint-requirements.txt
 - locks/plugins.lock.json
+
+提交锁文件：
+
+~~~powershell
+git add locks/plugins.lock.json locks/npm/package-lock.json locks/python/tclint-requirements.txt
+git commit -m "build: update offline dependency locks"
+~~~
 
 后续日常构建：
 
