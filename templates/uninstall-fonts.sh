@@ -5,15 +5,24 @@ SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || true)"
 [ -n "$SCRIPT_PATH" ] || SCRIPT_PATH="$0"
 ROOT="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
 
-FONT_DIR="$ROOT/fonts/maple-mono"
-CACHE_DIR="$ROOT/cache/fontconfig"
+FONT_SOURCE_DIR="$ROOT/fonts/maple-mono"
+USER_FONT_DIR="$HOME/.local/share/fonts/nvim-offline-build"
+USER_FONT_MARKER="$USER_FONT_DIR/.nvim-offline-build-managed"
+USER_FONT_MANIFEST="$USER_FONT_DIR/.nvim-offline-build-files"
+USER_FONT_LINK="$HOME/.fonts/nvim-offline-build"
 STATE_DIR="$ROOT/state/fontconfig"
+STATE_FONT_DIR="$STATE_DIR/user-font-dir"
+CACHE_DIR="$ROOT/cache/fontconfig"
 BUNDLE_CONFIG="$ROOT/config/fontconfig/conf.d/99-nvim-offline-build.conf"
 SYSTEM_CONF="/etc/fonts/conf.d/99-nvim-offline-build-fonts.conf"
 
 fail() {
     printf 'ERROR: %s\n' "$*" >&2
     exit 1
+}
+
+info() {
+    printf '[nvim-fonts] %s\n' "$*"
 }
 
 usage() {
@@ -51,10 +60,21 @@ remove_managed_symlink() {
         current_target="$(readlink -f "$link_path" 2>/dev/null || true)"
         if [ "$current_target" = "$expected_target" ]; then
             rm -f "$link_path"
-            printf 'Removed symlink: %s\n' "$link_path"
+            info "Removed symlink: $link_path"
         else
-            printf 'Kept unrelated symlink: %s -> %s\n' "$link_path" "$(readlink "$link_path")"
+            info "Kept unrelated symlink: $link_path -> $(readlink "$link_path")"
         fi
+    fi
+}
+
+remove_legacy_state_link() {
+    state_file="$1"
+    expected_target="$2"
+
+    if [ -f "$state_file" ]; then
+        old_link="$(cat "$state_file")"
+        [ -n "$old_link" ] && remove_managed_symlink "$old_link" "$expected_target"
+        rm -f "$state_file"
     fi
 }
 
@@ -73,14 +93,53 @@ if [ "$MODE" = "system" ]; then
     exit 0
 fi
 
-if [ -f "$STATE_DIR/user-config-link" ]; then
-    remove_managed_symlink "$(cat "$STATE_DIR/user-config-link")" "$BUNDLE_CONFIG"
+[ -n "$HOME" ] || fail "HOME is not set."
+
+if [ -f "$STATE_FONT_DIR" ]; then
+    USER_FONT_DIR="$(cat "$STATE_FONT_DIR")"
+    case "$USER_FONT_DIR" in
+        "$HOME"/*) ;;
+        *) fail "Recorded font directory is outside HOME; refusing to remove it: $USER_FONT_DIR" ;;
+    esac
+    USER_FONT_MARKER="$USER_FONT_DIR/.nvim-offline-build-managed"
+    USER_FONT_MANIFEST="$USER_FONT_DIR/.nvim-offline-build-files"
 fi
-if [ -f "$STATE_DIR/user-font-link" ]; then
-    remove_managed_symlink "$(cat "$STATE_DIR/user-font-link")" "$FONT_DIR"
+
+# Clean up registration links created by older versions, but never remove
+# links that have been repointed by the user.
+remove_legacy_state_link "$STATE_DIR/user-config-link" "$BUNDLE_CONFIG"
+remove_legacy_state_link "$STATE_DIR/user-font-link" "$FONT_SOURCE_DIR"
+remove_legacy_state_link "$STATE_DIR/user-cache-link" "$CACHE_DIR"
+remove_managed_symlink "$USER_FONT_LINK" "$FONT_SOURCE_DIR"
+remove_managed_symlink "$USER_FONT_LINK" "$USER_FONT_DIR"
+
+if [ -f "$BUNDLE_CONFIG" ] && grep -q 'Managed by nvim-offline-build' "$BUNDLE_CONFIG"; then
+    rm -f "$BUNDLE_CONFIG"
 fi
-if [ -f "$STATE_DIR/user-cache-link" ]; then
-    remove_managed_symlink "$(cat "$STATE_DIR/user-cache-link")" "$CACHE_DIR"
+
+if [ -d "$USER_FONT_DIR" ] && [ ! -L "$USER_FONT_DIR" ]; then
+    if [ -f "$USER_FONT_MARKER" ] && [ "$(cat "$USER_FONT_MARKER")" = "Managed by nvim-offline-build" ]; then
+        if [ -f "$USER_FONT_MANIFEST" ] && [ ! -L "$USER_FONT_MANIFEST" ]; then
+            while IFS= read -r managed_file; do
+                [ -n "$managed_file" ] || continue
+                case "$managed_file" in
+                    */*|.|..) fail "Invalid entry in managed font manifest: $managed_file" ;;
+                esac
+                rm -f "$USER_FONT_DIR/$managed_file"
+            done < "$USER_FONT_MANIFEST"
+            rm -f "$USER_FONT_MANIFEST"
+        fi
+        rm -f "$USER_FONT_MARKER"
+        if rmdir "$USER_FONT_DIR" 2>/dev/null; then
+            info "Removed installed font directory: $USER_FONT_DIR"
+        else
+            info "Kept font directory because it contains files not managed by this installer: $USER_FONT_DIR"
+        fi
+    else
+        info "Kept unmarked font directory: $USER_FONT_DIR"
+    fi
+else
+    info "User font directory was not present: $USER_FONT_DIR"
 fi
 
 if command -v fc-cache >/dev/null 2>&1; then
@@ -88,8 +147,8 @@ if command -v fc-cache >/dev/null 2>&1; then
 fi
 
 if [ -d "$STATE_DIR" ]; then
-    rm -f "$STATE_DIR/user-config-link" "$STATE_DIR/user-font-link" "$STATE_DIR/user-cache-link"
+    rm -f "$STATE_DIR/user-font-dir" "$STATE_DIR/user-config-link" "$STATE_DIR/user-font-link" "$STATE_DIR/user-cache-link"
     rmdir "$STATE_DIR" 2>/dev/null || true
 fi
 
-printf '%s\n' "User Fontconfig registration removed. Font files and Neovim cache remain in the installation directory."
+printf '%s\n' "User font installation removed. The Neovim bundle and unrelated user fonts were left unchanged."
