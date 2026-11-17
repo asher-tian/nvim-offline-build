@@ -10,6 +10,7 @@ vim.filetype.add({
         xdc = "tcl",
         upf = "tcl",
         icl = "icl",
+        pdl = "pdl",
         v = "verilog",
         vh = "verilog",
         sv = "systemverilog",
