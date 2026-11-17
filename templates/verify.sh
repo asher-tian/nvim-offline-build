@@ -20,6 +20,31 @@ fail() {
     exit 1
 }
 
+printf '%s\n' "== Executable permissions =="
+for executable in \
+    "$ROOT/install.sh" \
+    "$ROOT/nvim" \
+    "$ROOT/verify.sh" \
+    "$ROOT/install-fonts.sh" \
+    "$ROOT/uninstall-fonts.sh" \
+    "$ROOT/runtime/neovim/bin/nvim" \
+    "$ROOT/runtime/node/bin/node" \
+    "$ROOT/runtime/node/bin/npm" \
+    "$ROOT/runtime/python/bin/python3.11" \
+    "$ROOT/runtime/tools/bin/rg" \
+    "$ROOT/runtime/tools/bin/shfmt" \
+    "$ROOT/runtime/tools/bin/shellcheck" \
+    "$ROOT/runtime/tools/bin/verible-verilog-ls" \
+    "$ROOT/runtime/tools/bin/verible-verilog-lint" \
+    "$ROOT/runtime/tools/bin/verible-verilog-format"; do
+    [ -x "$executable" ] || fail "Missing executable permission: $executable"
+done
+for command_script in "$ROOT/runtime/commands/"*; do
+    [ -f "$command_script" ] || continue
+    [ -x "$command_script" ] || fail "Missing executable permission: $command_script"
+done
+printf '%s\n' "OK executable permissions"
+
 printf '%s\n' "== Runtime versions =="
 "$ROOT/runtime/node/bin/node" --version
 "$ROOT/nvim" --version | sed -n '1,3p'
