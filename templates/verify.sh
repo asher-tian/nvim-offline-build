@@ -94,7 +94,8 @@ printf '#!/usr/bin/env bash\necho "$HOME"\n' | "$ROOT/runtime/tools/bin/shellche
 
 printf '%s\n' "== Plugin/config smoke test =="
 [ ! -d "$ROOT/data/nvim/site/pack/offline/start/venv-selector.nvim" ] || fail "Removed plugin venv-selector.nvim is still installed."
-"$ROOT/nvim" --headless \
+VIMRUNTIME="/usr/share/vim/vim82" "$ROOT/nvim" --headless \
+    -c 'lua assert(vim.env.VIMRUNTIME == nil)' \
     -c 'lua assert(require("cmp"))' \
     -c 'lua assert(require("telescope"))' \
     -c 'lua assert(require("nvim-tree"))' \

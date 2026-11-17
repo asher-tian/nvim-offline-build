@@ -90,7 +90,7 @@ bash install.sh
 ./nvim
 ~~~
 
-安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。
+安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。 启动脚本会清理继承的 `VIMRUNTIME` 环境变量，避免系统 Vim（例如 Vim 8.2）的 Runtime 文件干扰这套独立 Neovim。
 
 ## 3. Python 环境配置
 
