@@ -100,8 +100,6 @@ for tool_name in verible-verilog-ls verible-verilog-lint verible-verilog-format;
 done
 
 # Restore executable bits lost when the archive was created on Windows.
-# Restore executable bits for root-level entry points. Windows-created archives
-# may not retain Git's Unix mode bits.
 chmod 755 "$ROOT/install.sh" "$ROOT/nvim" "$ROOT/verify.sh" "$ROOT/install-fonts.sh" "$ROOT/uninstall-fonts.sh"
 
 for command_file in "$RUNTIME/node/bin/node" "$RUNTIME/node/bin/npm" "$RUNTIME/node/bin/npx" "$RUNTIME/node/bin/corepack"; do
@@ -110,7 +108,6 @@ for command_file in "$RUNTIME/node/bin/node" "$RUNTIME/node/bin/npm" "$RUNTIME/n
     fi
 done
 chmod 755 "$RUNTIME/neovim/bin/nvim"
-chmod 755 "$RUNTIME/node/bin/node"
 chmod 755 "$RUNTIME/tools/bin/rg" "$RUNTIME/tools/bin/shfmt" \
     "$RUNTIME/tools/bin/shellcheck" \
     "$RUNTIME/tools/bin/verible-verilog-ls" \
