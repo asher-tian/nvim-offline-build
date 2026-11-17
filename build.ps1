@@ -257,7 +257,6 @@ Copy-Item -LiteralPath (Join-Path $repoRoot "README.md") -Destination (Join-Path
 Copy-Item -Path (Join-Path $repoRoot "templates/npmrc") -Destination (Join-Path $bundleRoot "config/npmrc") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/fd-MIT.txt") -Destination (Join-Path $bundleRoot "licenses/fd-MIT.txt") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/fd-APACHE-2.0.txt") -Destination (Join-Path $bundleRoot "licenses/fd-APACHE-2.0.txt") -Force
-Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/venv-selector-MIT.txt") -Destination (Join-Path $bundleRoot "licenses/venv-selector-MIT.txt") -Force
 
 # 1. Download Linux runtime archives into the persistent cache.
 # Existing files are reused only when their expected SHA256 matches.
