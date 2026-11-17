@@ -92,11 +92,19 @@ bash install.sh
 
 安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。
 
-## 3. Python 项目配置
+## 3. Python 环境配置
 
-Python 项目使用 uv 管理依赖，约定在项目根目录创建 `.venv`。Pyright 通过项目自己的 `pyrightconfig.json` 使用该环境，不需要 Neovim 虚拟环境选择插件。
+Neovim 使用 Pyright 提供 Python 语言服务。Pyright 的 Python 环境有两种常见配置方式：使用虚拟环境，或指定一个 Python 解释器。两者不要混用。
 
-在项目根目录配置：
+### 3.1 使用项目自己的 `.venv`（推荐）
+
+项目使用 uv 管理依赖，在项目根目录创建并同步 `.venv`：
+
+~~~bash
+uv sync
+~~~
+
+项目根目录的 `pyrightconfig.json`：
 
 ~~~json
 {
@@ -109,16 +117,56 @@ Python 项目使用 uv 管理依赖，约定在项目根目录创建 `.venv`。P
 }
 ~~~
 
-- `venvPath` 和 `venv` 指定项目虚拟环境。
-- `extraPaths` 指定项目内部模块的额外搜索目录，按实际项目结构填写。
-- `pyrightconfig.json` 可以提交到项目仓库，避免每位开发者单独配置绝对路径。
-- 修改配置后，在 Neovim 中执行 `:lsp restart pyright`，让 Pyright 重新加载配置。
+- `venvPath` 是虚拟环境所在的父目录；`.` 表示项目根目录。
+- `venv` 是该父目录下的虚拟环境目录名；这里是 `.venv`。
+- `extraPaths` 是项目内部模块的额外搜索路径，按项目实际结构填写。
+- 这种相对路径配置可以提交到项目仓库，团队成员使用相同项目布局即可。
 
-Neovim 不负责创建或选择 Python 虚拟环境。使用 uv 在项目根目录创建并同步环境：
+### 3.2 使用存放在其它目录的虚拟环境
 
-~~~bash
-uv sync
+如果虚拟环境不在项目目录中，也可以指定虚拟环境父目录和环境目录名。例如环境位于 `/opt/pyenvs/data-tool`：
+
+~~~json
+{
+  "venvPath": "/opt/pyenvs",
+  "venv": "data-tool"
+}
 ~~~
+
+`venvPath` 必须指向包含虚拟环境目录的父目录，`venv` 只填写其下的目录名，不要填写 Python 可执行文件路径。由于绝对路径通常因机器而异，这种配置一般不适合提交到多人共享的项目仓库。
+
+### 3.3 使用系统 Python 或其它位置的 Python 解释器
+
+如果要使用的不是虚拟环境，而是一个明确的解释器，例如 `/usr/bin/python3.11` 或 `/opt/python/3.12/bin/python3.12`，不要在 `pyrightconfig.json` 中添加 `pythonPath`。该文件没有这个配置项。
+
+本仓库提供 `:PyrightSetPythonPath` 命令。打开对应 Python 文件并确保 Pyright 已启动后，执行：
+
+~~~vim
+:PyrightSetPythonPath /usr/bin/python3.11
+~~~
+
+也可以指定其它绝对路径：
+
+~~~vim
+:PyrightSetPythonPath /opt/python/3.12/bin/python3.12
+~~~
+
+该命令会把解释器路径发送给当前 Buffer 使用的 Pyright Language Server，并立即更新当前会话的环境解析。它不会修改项目文件；重启 Neovim 或 Pyright 后需要重新设置。
+
+如果所有项目都固定使用同一个解释器，也可以在 `config/nvim/lua/plugins/lsp.lua` 的 Pyright 配置中设置 `settings.python.pythonPath`。这是 Neovim 的 LSP 设置，不是 `pyrightconfig.json` 字段；它会影响使用该配置的所有项目。
+
+### 3.4 配置选择与生效
+
+| 需求 | 配置方式 | 是否适合提交到项目仓库 |
+|---|---|---|
+| 每个项目使用自己的 `.venv` | `venvPath` + `venv` | 是，推荐使用相对路径 |
+| 使用项目外的虚拟环境 | `venvPath` + `venv` | 通常否，路径可能因机器不同 |
+| 使用系统或任意位置的 Python 解释器 | `:PyrightSetPythonPath` | 否，属于当前 Neovim 会话设置 |
+
+- 修改 `pyrightconfig.json` 后执行 `:lsp restart pyright`。
+- `:PyrightSetPythonPath` 设置的是解释器路径；该解释器应安装项目需要的第三方包。
+- `extraPaths` 只补充项目模块搜索目录，不负责选择 Python 解释器或安装依赖。
+- 如果没有指定虚拟环境或解释器，Pyright 会回退到启动环境中默认的 `python`。
 ## 4. 常用快捷键与开发场景
 
 Leader 键为 `Space`。除特别说明外，快捷键在 Normal 模式下使用；按 `Esc` 可返回 Normal 模式。

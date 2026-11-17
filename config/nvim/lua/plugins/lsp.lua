@@ -72,3 +72,45 @@ vim.api.nvim_create_autocmd("FileType", {
     end,
 })
 
+-- Set an explicit Python interpreter for the current Pyright session.
+vim.api.nvim_create_user_command("PyrightSetPythonPath", function(command)
+    local clients = vim.lsp.get_clients({
+        bufnr = 0,
+        name = "pyright",
+    })
+
+    if #clients == 0 then
+        vim.notify("Pyright is not attached to the current buffer.", vim.log.levels.WARN)
+        return
+    end
+
+    local python_path = vim.fn.fnamemodify(vim.fn.expand(command.args), ":p")
+    if vim.fn.executable(python_path) ~= 1 then
+        vim.notify("Python interpreter is not executable: " .. python_path, vim.log.levels.ERROR)
+        return
+    end
+
+    for _, client in ipairs(clients) do
+        if client.settings then
+            client.settings.python = vim.tbl_deep_extend(
+                "force",
+                client.settings.python or {},
+                { pythonPath = python_path }
+            )
+        else
+            client.config.settings = vim.tbl_deep_extend(
+                "force",
+                client.config.settings or {},
+                { python = { pythonPath = python_path } }
+            )
+        end
+
+        client:notify("workspace/didChangeConfiguration", { settings = nil })
+    end
+
+    vim.notify("Pyright Python interpreter: " .. python_path)
+end, {
+    desc = "Set Python interpreter for the current Pyright session",
+    nargs = 1,
+    complete = "file",
+})

@@ -101,6 +101,7 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'lua assert(require("conform"))' \
     -c 'lua assert(require("lualine"))' \
     -c 'lua assert(require("catppuccin"))' \
+    -c 'lua assert(vim.fn.exists(":PyrightSetPythonPath") == 2)' \
     -c 'lua assert(vim.fn.executable("fd") == 1)' \
     -c 'lua assert(vim.fn.maparg("gc", "n") ~= "")' \
     -c 'lua assert(vim.fn.maparg("gcc", "n") ~= "")' \
