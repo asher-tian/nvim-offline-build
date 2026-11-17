@@ -11,7 +11,6 @@ USER_FONT_MARKER="$USER_FONT_DIR/.nvim-offline-build-managed"
 USER_FONT_MANIFEST="$USER_FONT_DIR/.nvim-offline-build-files"
 USER_FONT_LINK="$HOME/.fonts/nvim-offline-build"
 STATE_DIR="$ROOT/state/fontconfig"
-STATE_FONT_DIR="$STATE_DIR/user-font-dir"
 CACHE_DIR="$ROOT/cache/fontconfig"
 BUNDLE_CONFIG="$ROOT/config/fontconfig/conf.d/99-nvim-offline-build.conf"
 SYSTEM_CONF="/etc/fonts/conf.d/99-nvim-offline-build-fonts.conf"
@@ -95,16 +94,6 @@ fi
 
 [ -n "$HOME" ] || fail "HOME is not set."
 
-if [ -f "$STATE_FONT_DIR" ]; then
-    USER_FONT_DIR="$(cat "$STATE_FONT_DIR")"
-    case "$USER_FONT_DIR" in
-        "$HOME"/*) ;;
-        *) fail "Recorded font directory is outside HOME; refusing to remove it: $USER_FONT_DIR" ;;
-    esac
-    USER_FONT_MARKER="$USER_FONT_DIR/.nvim-offline-build-managed"
-    USER_FONT_MANIFEST="$USER_FONT_DIR/.nvim-offline-build-files"
-fi
-
 # Clean up registration links created by older versions, but never remove
 # links that have been repointed by the user.
 remove_legacy_state_link "$STATE_DIR/user-config-link" "$BUNDLE_CONFIG"
@@ -113,7 +102,7 @@ remove_legacy_state_link "$STATE_DIR/user-cache-link" "$CACHE_DIR"
 remove_managed_symlink "$USER_FONT_LINK" "$FONT_SOURCE_DIR"
 remove_managed_symlink "$USER_FONT_LINK" "$USER_FONT_DIR"
 
-if [ -f "$BUNDLE_CONFIG" ] && grep -q 'Managed by nvim-offline-build' "$BUNDLE_CONFIG"; then
+if [ -f "$BUNDLE_CONFIG" ] && grep -q 'Managed by nvim-offline-build' "$BUNDLE_CONFIG" && [ -w "$(dirname "$BUNDLE_CONFIG")" ]; then
     rm -f "$BUNDLE_CONFIG"
 fi
 
@@ -147,8 +136,10 @@ if command -v fc-cache >/dev/null 2>&1; then
 fi
 
 if [ -d "$STATE_DIR" ]; then
-    rm -f "$STATE_DIR/user-font-dir" "$STATE_DIR/user-config-link" "$STATE_DIR/user-font-link" "$STATE_DIR/user-cache-link"
-    rmdir "$STATE_DIR" 2>/dev/null || true
+    if [ -w "$STATE_DIR" ]; then
+        rm -f "$STATE_DIR/user-config-link" "$STATE_DIR/user-font-link" "$STATE_DIR/user-cache-link"
+        rmdir "$STATE_DIR" 2>/dev/null || true
+    fi
 fi
 
 printf '%s\n' "User font installation removed. The Neovim bundle and unrelated user fonts were left unchanged."
