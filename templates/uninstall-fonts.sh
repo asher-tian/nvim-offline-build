@@ -84,10 +84,15 @@ fi
 # Also clean up the default config link if it points to this installation.
 if [ -n "${HOME:-}" ]; then
     CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+    CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
     remove_managed_symlink "$CONFIG_HOME/fontconfig/conf.d/99-nvim-offline-build.conf" "$BUNDLE_CONFIG"
+    remove_managed_symlink "$HOME/.fonts/nvim-offline-build" "$FONT_DIR"
+    remove_managed_symlink "$CACHE_HOME/fontconfig" "$CACHE_DIR"
 fi
 
-command -v fc-cache >/dev/null 2>&1 && fc-cache -f
+if command -v fc-cache >/dev/null 2>&1; then
+    fc-cache -f
+fi
 
 if [ -d "$STATE_DIR" ]; then
     rm -f "$STATE_DIR/user-config-link" "$STATE_DIR/user-font-link" "$STATE_DIR/user-cache-link"
