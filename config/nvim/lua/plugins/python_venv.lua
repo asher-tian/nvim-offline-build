@@ -9,10 +9,10 @@ require("venv-selector").setup({
     -- depending on broad workspace discovery for the common uv layout.
     search = {
         uv_cwd = {
-            command = "$FD '/bin/python$' '$CWD/.venv' --full-path --color never -HI -a -L",
+            command = "$FD '/bin/python[0-9.]*$' '$CWD/.venv' --full-path --color never -HI -a -L",
         },
         uv_workspace = {
-            command = "$FD '/bin/python$' '$WORKSPACE_PATH/.venv' --full-path --color never -HI -a -L",
+            command = "$FD '/bin/python[0-9.]*$' '$WORKSPACE_PATH/.venv' --full-path --color never -HI -a -L",
         },
     },
     options = {
