@@ -86,7 +86,7 @@ cd /data/devtools/nvim
 bash install-fonts.sh
 ~~~
 
-字体文件始终保留在 fonts/maple-mono/。脚本在 HOME 中只创建必要的 Fontconfig 配置软链接；如果系统不加载用户级 Fontconfig 配置，会回退到 ~/.fonts/ 下的软链接。没有字体文件复制到 HOME。Fontconfig 缓存优先放在安装目录的 cache/fontconfig/；已有用户缓存目录不会被覆盖。
+字体文件始终保留在 fonts/maple-mono/，配置文件保存在安装目录的 config/fontconfig/。HOME 中只创建指向安装目录的 Fontconfig 配置软链接；如果系统不加载用户级 Fontconfig 配置，会回退到 ~/.fonts/nvim-offline-build 软链接。字体文件不会复制到 HOME。若 HOME 中还没有 Fontconfig 缓存目录，脚本会将 ~/.cache/fontconfig 链接到安装目录的 cache/fontconfig/；已有缓存目录或其他软链接不会被覆盖。
 
 检查字体是否可用：
 
