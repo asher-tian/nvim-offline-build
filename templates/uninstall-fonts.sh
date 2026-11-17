@@ -63,7 +63,9 @@ if [ "$MODE" = "system" ]; then
     if [ -f "$SYSTEM_CONF" ]; then
         grep -q 'Managed by nvim-offline-build' "$SYSTEM_CONF" || fail "Refusing to remove an unmanaged file: $SYSTEM_CONF"
         rm -f "$SYSTEM_CONF"
-        command -v fc-cache >/dev/null 2>&1 && fc-cache -f
+        if command -v fc-cache >/dev/null 2>&1; then
+            fc-cache -f
+        fi
         printf '%s\n' "Removed system Fontconfig registration. Font files remain in the Neovim directory."
     else
         printf '%s\n' "System Fontconfig registration was not present."
