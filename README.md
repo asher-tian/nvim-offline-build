@@ -112,7 +112,7 @@ Python 项目使用 uv 管理依赖，约定在项目根目录创建 `.venv`。P
 - `venvPath` 和 `venv` 指定项目虚拟环境。
 - `extraPaths` 指定项目内部模块的额外搜索目录，按实际项目结构填写。
 - `pyrightconfig.json` 可以提交到项目仓库，避免每位开发者单独配置绝对路径。
-- 修改配置后，在 Neovim 中执行 `:LspRestart`，让 Pyright 重新加载配置。
+- 修改配置后，在 Neovim 中执行 `:lsp restart pyright`，让 Pyright 重新加载配置。
 
 Neovim 不负责创建或选择 Python 虚拟环境。使用 uv 在项目根目录创建并同步环境：
 
@@ -196,7 +196,7 @@ Telescope 搜索时输入关键词即可模糊匹配；按 `Enter` 打开结果�
 
 | 命令 | 功能 |
 |---|---|
-| `:LspRestart` | 重启 Pyright，重新加载项目配置 |
+| `:lsp restart pyright` | 重启 Pyright，重新加载项目配置 |
 
 项目虚拟环境由 `pyrightconfig.json` 指定，项目内部模块搜索路径由 `extraPaths` 管理。Neovim 不需要额外选择解释器。
 
