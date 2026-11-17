@@ -69,6 +69,12 @@
       "file": "verible-v0.0-4300-ga832669d-linux-static-x86_64.tar.gz",
       "url": "https://github.com/chipsalliance/verible/releases/download/v0.0-4300-ga832669d/verible-v0.0-4300-ga832669d-linux-static-x86_64.tar.gz",
       "sha256": "d72a7ad9047a10d61681ab4dc4e2a9434955485f9fcbebe7dfa52fc8f65ee482"
+    },
+    "fd": {
+      "version": "10.5.2",
+      "file": "fd-v10.5.2-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://github.com/sharkdp/fd/releases/download/v10.5.2/fd-v10.5.2-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "7e2d07fa2b8807642aaec67b7e2972a9fbe4db26fcb340a7372392db42b26694"
     }
   },
   "fonts": {

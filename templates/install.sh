@@ -39,6 +39,7 @@ awk -v version="$GLIBC_VERSION" 'BEGIN {
 [ -f "$PAYLOAD/nvim-linux-x86_64.tar.gz" ] || fail "Missing Neovim payload."
 [ -f "$PAYLOAD/node-v22.23.5-linux-x64-glibc-217.tar.gz" ] || fail "Missing Node.js 22.23.5 payload."
 [ -f "$PAYLOAD/ripgrep-15.2.0-x86_64-unknown-linux-musl.tar.gz" ] || fail "Missing ripgrep payload."
+[ -f "$PAYLOAD/fd-v10.5.2-x86_64-unknown-linux-musl.tar.gz" ] || fail "Missing fd payload."
 [ -f "$PAYLOAD/shfmt_v3.11.0_linux_amd64" ] || fail "Missing shfmt payload."
 [ -f "$PAYLOAD/cpython-3.11.18+20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz" ] || fail "Missing bundled Python 3.11.18 payload."
 [ -f "$PAYLOAD/shellcheck-v0.11.0.linux.x86_64.tar.gz" ] || fail "Missing ShellCheck payload."
@@ -77,12 +78,17 @@ tar -xzf "$PAYLOAD/cpython-3.11.18+20261110-x86_64-unknown-linux-gnu-install_onl
     -C "$RUNTIME/python" --strip-components=1
 [ -x "$RUNTIME/python/bin/python3.11" ] || fail "Bundled Python archive did not contain bin/python3.11."
 
-info "Installing ripgrep, shfmt, ShellCheck and Verible..."
-mkdir -p "$TMP/rg" "$TMP/shellcheck" "$TMP/verible" "$RUNTIME/tools/bin"
+info "Installing ripgrep, fd, shfmt, ShellCheck and Verible..."
+mkdir -p "$TMP/rg" "$TMP/fd" "$TMP/shellcheck" "$TMP/verible" "$RUNTIME/tools/bin"
 tar -xzf "$PAYLOAD/ripgrep-15.2.0-x86_64-unknown-linux-musl.tar.gz" \
     -C "$TMP/rg" --strip-components=1
 [ -f "$TMP/rg/rg" ] || fail "ripgrep archive did not contain rg."
 cp "$TMP/rg/rg" "$RUNTIME/tools/bin/rg"
+
+tar -xzf "$PAYLOAD/fd-v10.5.2-x86_64-unknown-linux-musl.tar.gz" \
+    -C "$TMP/fd" --strip-components=1
+[ -f "$TMP/fd/fd" ] || fail "fd archive did not contain fd."
+cp "$TMP/fd/fd" "$RUNTIME/tools/bin/fd"
 cp "$PAYLOAD/shfmt_v3.11.0_linux_amd64" "$RUNTIME/tools/bin/shfmt"
 
 tar -xzf "$PAYLOAD/shellcheck-v0.11.0.linux.x86_64.tar.gz" \
@@ -108,7 +114,7 @@ for command_file in "$RUNTIME/node/bin/node" "$RUNTIME/node/bin/npm" "$RUNTIME/n
     fi
 done
 chmod 755 "$RUNTIME/neovim/bin/nvim"
-chmod 755 "$RUNTIME/tools/bin/rg" "$RUNTIME/tools/bin/shfmt" \
+chmod 755 "$RUNTIME/tools/bin/rg" "$RUNTIME/tools/bin/fd" "$RUNTIME/tools/bin/shfmt" \
     "$RUNTIME/tools/bin/shellcheck" \
     "$RUNTIME/tools/bin/verible-verilog-ls" \
     "$RUNTIME/tools/bin/verible-verilog-lint" \

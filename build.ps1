@@ -255,6 +255,9 @@ Copy-Item -Path (Join-Path $repoRoot "templates/install-fonts.sh") -Destination 
 Copy-Item -Path (Join-Path $repoRoot "templates/uninstall-fonts.sh") -Destination (Join-Path $bundleRoot "uninstall-fonts.sh") -Force
 Copy-Item -LiteralPath (Join-Path $repoRoot "README.md") -Destination (Join-Path $bundleRoot "README.md") -Force
 Copy-Item -Path (Join-Path $repoRoot "templates/npmrc") -Destination (Join-Path $bundleRoot "config/npmrc") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/fd-MIT.txt") -Destination (Join-Path $bundleRoot "licenses/fd-MIT.txt") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/fd-APACHE-2.0.txt") -Destination (Join-Path $bundleRoot "licenses/fd-APACHE-2.0.txt") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/venv-selector-MIT.txt") -Destination (Join-Path $bundleRoot "licenses/venv-selector-MIT.txt") -Force
 
 # 1. Download Linux runtime archives into the persistent cache.
 # Existing files are reused only when their expected SHA256 matches.
@@ -280,6 +283,12 @@ $rgCached = Join-Path $downloadCache $rg.file
 Invoke-Download -Url $rg.url -Destination $rgCached -ExpectedSha256 $rg.sha256
 Assert-Sha256 -Path $rgCached -Expected $rg.sha256
 Copy-Item -LiteralPath $rgCached -Destination (Join-Path $payloadRoot $rg.file) -Force
+
+$fd = $versions.tools.fd
+$fdCached = Join-Path $downloadCache $fd.file
+Invoke-Download -Url $fd.url -Destination $fdCached -ExpectedSha256 $fd.sha256
+Assert-Sha256 -Path $fdCached -Expected $fd.sha256
+Copy-Item -LiteralPath $fdCached -Destination (Join-Path $payloadRoot $fd.file) -Force
 
 $shfmt = $versions.tools.shfmt
 $shfmtChecksumsCached = Join-Path $downloadCache ("shfmt-" + $shfmt.version + "-sha256sums.txt")
@@ -688,6 +697,7 @@ Node.js: $($versions.runtime.node.version) (linux-x64-glibc-217)
 Maple Mono NF CN: $($font.version)
 Python: $($versions.runtime.python.version) (bundled for Tcl LSP)
 Tclint: 0.9.0
+fd: $($versions.tools.fd.version)
 ShellCheck: $($versions.tools.shellcheck.version)
 Verible: $($versions.tools.verible.version)
 uv builder: $uvActual

@@ -8,6 +8,12 @@
       "commit": "6e72b89d499455611f09f46d13ee9f79325406e5"
     },
     {
+      "name": "venv-selector.nvim",
+      "repo": "https://github.com/linux-cultist/venv-selector.nvim.git",
+      "ref": "main",
+      "commit": "cc4bb3975de8835291f9bb45889e96c6b2795fc4"
+    },
+    {
       "name": "nvim-cmp",
       "repo": "https://github.com/hrsh7th/nvim-cmp.git",
       "ref": "main",

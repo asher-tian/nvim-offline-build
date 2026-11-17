@@ -92,7 +92,35 @@ bash install.sh
 
 安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。
 
-## 3. ICL / PDL 自定义语法高亮
+## 3. Python 虚拟环境
+
+已集成 `venv-selector.nvim`，用于发现、选择并记住各项目的 Python 虚拟环境。离线包同时内置 `fd`，用于搜索解释器。
+
+首次打开 Python 项目时：
+
+~~~vim
+:VenvSelect
+~~~
+
+也可以使用快捷键 `Space vs`。选择项目中的 `.venv` / `venv`，或 Poetry、Conda、Pipenv、Pyenv 等环境。选择结果按项目缓存；后续重新打开该项目的 Python 文件时会自动恢复，并同步给 Pyright。Lualine 状态栏会显示当前环境名称。
+
+- `fd`、Telescope 和 Pyright 均随离线包提供。
+- Neovim 新开终端会继承当前选中的虚拟环境。
+- 虚拟环境缓存位于安装目录的 XDG cache 下，不写入 HOME。
+- 每个项目首次选择一次即可；无需为虚拟环境单独修改 `pyrightconfig.json`。
+
+项目特有的内部模块搜索路径仍可单独写在项目根目录的 `pyrightconfig.json`：
+
+~~~json
+{
+  "extraPaths": [
+    "code/python",
+    "lib/tool"
+  ]
+}
+~~~
+
+## 4. ICL / PDL 自定义语法高亮
 
 仓库不内置 ICL、PDL 语法文件。Neovim 已配置文件类型识别：
 
@@ -113,7 +141,7 @@ cp /path/to/pdl.vim config/nvim/syntax/pdl.vim
 
 如果希望将自己的语法文件直接包含在后续离线包中，则在 Windows 构建前，将它们放入仓库的 `config/nvim/syntax/` 目录；`build.ps1` 会将该目录一并打包。
 
-## 4. 字体安装（可选）
+## 5. 字体安装（可选）
 
 默认安装到当前用户的 HOME，不需要 root：
 

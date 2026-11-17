@@ -32,6 +32,7 @@ for executable in \
     "$ROOT/runtime/node/bin/npm" \
     "$ROOT/runtime/python/bin/python3.11" \
     "$ROOT/runtime/tools/bin/rg" \
+    "$ROOT/runtime/tools/bin/fd" \
     "$ROOT/runtime/tools/bin/shfmt" \
     "$ROOT/runtime/tools/bin/shellcheck" \
     "$ROOT/runtime/tools/bin/verible-verilog-ls" \
@@ -49,6 +50,7 @@ printf '%s\n' "== Runtime versions =="
 "$ROOT/runtime/node/bin/node" --version
 "$ROOT/nvim" --version | sed -n '1,3p'
 "$ROOT/runtime/tools/bin/rg" --version | sed -n '1p'
+"$ROOT/runtime/tools/bin/fd" --version
 "$ROOT/runtime/tools/bin/shfmt" --version
 
 printf '%s\n' "== Bundled terminal font =="
@@ -98,6 +100,9 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'lua assert(require("conform"))' \
     -c 'lua assert(require("lualine"))' \
     -c 'lua assert(require("catppuccin"))' \
+    -c 'lua assert(require("venv-selector"))' \
+    -c 'lua assert(vim.fn.exists(":VenvSelect") == 2)' \
+    -c 'lua assert(vim.fn.executable("fd") == 1)' \
     -c 'lua assert(vim.fn.maparg("gc", "n") ~= "")' \
     -c 'lua assert(vim.fn.maparg("gcc", "n") ~= "")' \
     -c 'lua assert(vim.fn.maparg("grr", "n") ~= "")' \
