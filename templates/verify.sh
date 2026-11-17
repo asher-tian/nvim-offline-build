@@ -53,8 +53,10 @@ printf '%s\n' "== Runtime versions =="
 
 printf '%s\n' "== Bundled terminal font =="
 [ -d "$ROOT/fonts/maple-mono" ] || fail "Missing Maple Mono NF CN font directory."
-find "$ROOT/fonts/maple-mono" -type f -name '*.ttf' -print -quit | grep -q . || fail "No Maple Mono NF CN TTF files found."
-printf '%s\n' "OK Maple Mono NF CN"
+[ -f "$ROOT/fonts/maple-mono/MapleMono-NF-CN-Regular.ttf" ] || fail "Missing MapleMono-NF-CN-Regular.ttf."
+font_count="$(find "$ROOT/fonts/maple-mono" -maxdepth 1 -type f -name '*.ttf' | wc -l | tr -d ' ')"
+[ "$font_count" = "1" ] || fail "Expected exactly one bundled TTF font, found $font_count."
+printf '%s\n' "OK Maple Mono NF CN Regular (single TTF)"
 
 printf '%s\n' "== Required language servers =="
 for command_name in \
