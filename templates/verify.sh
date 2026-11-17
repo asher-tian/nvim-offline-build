@@ -31,6 +31,7 @@ for executable in \
     "$ROOT/runtime/node/bin/node" \
     "$ROOT/runtime/node/bin/npm" \
     "$ROOT/runtime/python/bin/python3.11" \
+    "$ROOT/runtime/python-packages/bin/ruff" \
     "$ROOT/runtime/tools/bin/rg" \
     "$ROOT/runtime/tools/bin/fd" \
     "$ROOT/runtime/tools/bin/shfmt" \
@@ -43,6 +44,10 @@ done
 for command_script in "$ROOT/runtime/commands/"*; do
     [ -f "$command_script" ] || continue
     [ -x "$command_script" ] || fail "Missing executable permission: $command_script"
+done
+for python_command in "$ROOT/runtime/python-packages/bin/"*; do
+    [ -f "$python_command" ] || continue
+    [ -x "$python_command" ] || fail "Missing executable permission: $python_command"
 done
 printf '%s\n' "OK executable permissions"
 
@@ -106,6 +111,7 @@ printf '%s\n' "== Language tool versions =="
 "$ROOT/runtime/tools/bin/shellcheck" --version | sed -n '1,2p'
 printf '%s\n' "module top(input logic clk); endmodule" | "$ROOT/runtime/tools/bin/verible-verilog-format" --stdin_name smoke.sv - >/dev/null
 "$ROOT/runtime/commands/tclint" --version
+"$ROOT/runtime/python-packages/bin/ruff" --version
 "$ROOT/runtime/commands/ruff" --version
 printf 'set value 1\n' | "$ROOT/runtime/commands/tclint" -
 printf 'set value 1\n' | "$ROOT/runtime/commands/tclfmt" - >/dev/null

@@ -128,6 +128,14 @@ if [ -d "$RUNTIME/commands" ]; then
     find "$RUNTIME/commands" -type f -exec chmod 755 {} \;
 fi
 
+# uv installs Unix wheel entry points under python-packages/bin. Their executable
+# bits may be lost when the bundle is assembled on Windows.
+PYTHON_COMMANDS="$RUNTIME/python-packages/bin"
+[ -d "$PYTHON_COMMANDS" ] || fail "Missing bundled Python command directory."
+find "$PYTHON_COMMANDS" -maxdepth 1 -type f -exec chmod 755 {} \;
+[ -f "$PYTHON_COMMANDS/ruff" ] || fail "Missing bundled Ruff executable."
+[ -x "$PYTHON_COMMANDS/ruff" ] || fail "Ruff executable permission could not be restored."
+
 # Check dynamic dependencies before reporting success.
 if ldd "$RUNTIME/neovim/bin/nvim" 2>&1 | grep -q "not found"; then
     ldd "$RUNTIME/neovim/bin/nvim" >&2
@@ -148,6 +156,8 @@ NODE_VERSION="$("$RUNTIME/node/bin/node" --version)"
 PYTHON_VERSION="$(LD_LIBRARY_PATH="$RUNTIME/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" "$RUNTIME/python/bin/python3.11" --version 2>&1)"
 [ "$PYTHON_VERSION" = "Python 3.11.18" ] || fail "Unexpected bundled Python version: $PYTHON_VERSION"
 LD_LIBRARY_PATH="$RUNTIME/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" PYTHONPATH="$ROOT/runtime/python-packages" "$RUNTIME/python/bin/python3.11" -c 'import tclint, pygls, ruff' || fail "Tcl tooling or Ruff Python dependencies could not be imported."
+"$PYTHON_COMMANDS/ruff" --version >/dev/null || fail "Bundled Ruff executable could not be started."
+"$RUNTIME/commands/ruff" --version >/dev/null || fail "Ruff command wrapper could not be started."
 
 NPM_VERSION="$(PATH="$RUNTIME/node/bin:$PATH" "$RUNTIME/node/bin/npm" --version)"
 [ "$NPM_VERSION" = "10.9.9" ] || fail "Unexpected npm version: $NPM_VERSION"

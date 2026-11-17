@@ -83,6 +83,8 @@ cd /data/devtools/nvim
 # 初始化运行时并恢复所有必要的执行权限
 bash install.sh
 
+安装脚本会恢复 Windows 打包过程中可能丢失的 Unix 执行权限，包括 `runtime/python-packages/bin/` 下由 Python Wheel 安装生成的命令入口（Ruff、tclint 等）。不会将整个 Python 包目录设置为可执行。
+
 # 验证运行时、插件和语言工具
 ./verify.sh
 
