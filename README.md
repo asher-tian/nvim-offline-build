@@ -92,7 +92,28 @@ bash install.sh
 
 安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。
 
-## 3. 字体安装（可选）
+## 3. ICL / PDL 自定义语法高亮
+
+仓库不内置 ICL、PDL 语法文件。Neovim 已配置文件类型识别：
+
+- `.icl` → `icl`
+- `.pdl` → `pdl`
+
+将自己准备的 Vim Syntax 文件分别命名为 `icl.vim`、`pdl.vim`，部署到 Neovim 配置目录的 `syntax/` 下：
+
+~~~bash
+cd /data/devtools/nvim
+mkdir -p config/nvim/syntax
+
+cp /path/to/icl.vim config/nvim/syntax/icl.vim
+cp /path/to/pdl.vim config/nvim/syntax/pdl.vim
+~~~
+
+无需重新构建或安装插件，重新打开对应文件即可生效。也可以在 Neovim 中执行 `:set filetype=icl` 或 `:set filetype=pdl` 手动切换文件类型。
+
+如果希望将自己的语法文件直接包含在后续离线包中，则在 Windows 构建前，将它们放入仓库的 `config/nvim/syntax/` 目录；`build.ps1` 会将该目录一并打包。
+
+## 4. 字体安装（可选）
 
 默认使用用户级安装，不需要 root：
 
