@@ -35,19 +35,6 @@ require("lualine").setup({
     },
     sections = {
         lualine_x = {
-            function()
-                local ok, selector = pcall(require, "venv-selector")
-                if not ok then
-                    return ""
-                end
-
-                local venv_path = selector.venv()
-                if not venv_path or venv_path == "" then
-                    return ""
-                end
-
-                return "Py " .. vim.fn.fnamemodify(venv_path, ":t")
-            end,
             "encoding",
             "fileformat",
             "filetype",

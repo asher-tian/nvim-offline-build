@@ -59,6 +59,9 @@ rm -f "$probe"
 
 mkdir -p "$RUNTIME" "$ROOT/cache" "$ROOT/state/nvim" "$ROOT/logs"
 
+# Remove the plugin from installations upgraded from older bundle versions.
+rm -rf "$ROOT/data/nvim/site/pack/offline/start/venv-selector.nvim"
+
 info "Extracting Neovim 0.12.5..."
 rm -rf "$RUNTIME/neovim"
 mkdir -p "$RUNTIME/neovim"

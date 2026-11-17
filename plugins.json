@@ -7,11 +7,6 @@
       "ref": "master"
     },
     {
-      "name": "venv-selector.nvim",
-      "repo": "https://github.com/linux-cultist/venv-selector.nvim.git",
-      "ref": "main"
-    },
-    {
       "name": "nvim-cmp",
       "repo": "https://github.com/hrsh7th/nvim-cmp.git",
       "ref": "main"

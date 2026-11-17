@@ -93,6 +93,7 @@ printf 'set value 1\n' | "$ROOT/runtime/commands/tclfmt" - >/dev/null
 printf '#!/usr/bin/env bash\necho "$HOME"\n' | "$ROOT/runtime/tools/bin/shellcheck" -s bash -
 
 printf '%s\n' "== Plugin/config smoke test =="
+[ ! -d "$ROOT/data/nvim/site/pack/offline/start/venv-selector.nvim" ] || fail "Removed plugin venv-selector.nvim is still installed."
 "$ROOT/nvim" --headless \
     -c 'lua assert(require("cmp"))' \
     -c 'lua assert(require("telescope"))' \
@@ -100,8 +101,6 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'lua assert(require("conform"))' \
     -c 'lua assert(require("lualine"))' \
     -c 'lua assert(require("catppuccin"))' \
-    -c 'lua assert(require("venv-selector"))' \
-    -c 'lua assert(vim.fn.exists(":VenvSelect") == 2)' \
     -c 'lua assert(vim.fn.executable("fd") == 1)' \
     -c 'lua assert(vim.fn.maparg("gc", "n") ~= "")' \
     -c 'lua assert(vim.fn.maparg("gcc", "n") ~= "")' \

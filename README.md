@@ -92,27 +92,16 @@ bash install.sh
 
 安装不需要 root。安装目录所在文件系统必须允许执行（不能以 noexec 挂载）。Neovim 的配置、插件、运行时、缓存和日志均保留在安装目录内，不写入 HOME 或系统公共 bin。
 
-## 3. Python 虚拟环境
+## 3. Python 项目配置
 
-已集成 `venv-selector.nvim`，用于发现、选择并记住各项目的 Python 虚拟环境。离线包同时内置 `fd`，用于搜索解释器。
+Python 项目使用 uv 管理依赖，约定在项目根目录创建 `.venv`。Pyright 通过项目自己的 `pyrightconfig.json` 使用该环境，不需要 Neovim 虚拟环境选择插件。
 
-首次打开 Python 项目时：
-
-~~~vim
-:VenvSelect
-~~~
-
-也可以使用快捷键 `Space vs`。选择项目中的 `.venv` / `venv`，或 Poetry、Conda、Pipenv、Pyenv 等环境。选择结果按项目缓存；后续重新打开该项目的 Python 文件时会自动恢复，并同步给 Pyright。Lualine 状态栏会显示当前环境名称。
-
-- `fd`、Telescope 和 Pyright 均随离线包提供。
-- Neovim 新开终端会继承当前选中的虚拟环境。
-- 虚拟环境缓存位于安装目录的 XDG cache 下，不写入 HOME。
-- 每个项目首次选择一次即可；无需为虚拟环境单独修改 `pyrightconfig.json`。
-
-项目特有的内部模块搜索路径仍可单独写在项目根目录的 `pyrightconfig.json`：
+在项目根目录配置：
 
 ~~~json
 {
+  "venvPath": ".",
+  "venv": ".venv",
   "extraPaths": [
     "code/python",
     "lib/tool"
@@ -120,6 +109,16 @@ bash install.sh
 }
 ~~~
 
+- `venvPath` 和 `venv` 指定项目虚拟环境。
+- `extraPaths` 指定项目内部模块的额外搜索目录，按实际项目结构填写。
+- `pyrightconfig.json` 可以提交到项目仓库，避免每位开发者单独配置绝对路径。
+- 修改配置后，在 Neovim 中执行 `:LspRestart`，让 Pyright 重新加载配置。
+
+Neovim 不负责创建或选择 Python 虚拟环境。使用 uv 在项目根目录创建并同步环境：
+
+~~~bash
+uv sync
+~~~
 ## 4. 常用快捷键与开发场景
 
 Leader 键为 `Space`。除特别说明外，快捷键在 Normal 模式下使用；按 `Esc` 可返回 Normal 模式。
@@ -195,12 +194,11 @@ Telescope 搜索时输入关键词即可模糊匹配；按 `Enter` 打开结果�
 
 ### Python 项目
 
-| 快捷键 / 命令 | 功能 |
+| 命令 | 功能 |
 |---|---|
-| `Space vs` 或 `:VenvSelect` | 搜索并选择项目 Python 虚拟环境 |
-| `:lsp restart pyright` | 重启 Pyright，重新加载项目配置或虚拟环境 |
+| `:LspRestart` | 重启 Pyright，重新加载项目配置 |
 
-首次进入项目时选择一次 `.venv` / `venv`。插件会缓存项目选择，并在后续打开项目时自动恢复；状态栏会显示当前环境名称。项目内部模块搜索路径仍由项目根目录的 `pyrightconfig.json` 中的 `extraPaths` 管理。
+项目虚拟环境由 `pyrightconfig.json` 指定，项目内部模块搜索路径由 `extraPaths` 管理。Neovim 不需要额外选择解释器。
 
 ### 格式化
 
@@ -232,10 +230,9 @@ Telescope 搜索时输入关键词即可模糊匹配；按 `Enter` 打开结果�
 
 **场景四：开始 Python 项目开发**
 
-1. 打开项目中的 Python 文件。
-2. 首次使用 `Space vs` 选择项目虚拟环境。
-3. 使用 `Space fg` 搜索项目内部模块。
-4. 使用 `grr`、`grn`、`K` 进行代码导航和理解。
+1. 确认项目根目录的 `pyrightconfig.json` 指定了 `.venv` 和必要的 `extraPaths`。
+2. 使用 `Space fg` 搜索项目内部模块。
+3. 使用 `grr`、`grn`、`K` 进行代码导航和理解。
 
 快捷键不熟悉时，可以按 `Space` 查看 which-key 提示，或执行 `:Tutor` 学习 Vim 基础操作。
 
