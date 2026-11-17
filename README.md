@@ -115,14 +115,20 @@ cp /path/to/pdl.vim config/nvim/syntax/pdl.vim
 
 ## 4. 字体安装（可选）
 
-默认使用用户级安装，不需要 root：
+默认安装到当前用户的 HOME，不需要 root：
 
 ~~~bash
 cd /data/devtools/nvim
 bash install-fonts.sh
 ~~~
 
-字体文件始终保留在 fonts/maple-mono/，配置文件保存在安装目录的 config/fontconfig/。HOME 中只创建指向安装目录的 Fontconfig 配置软链接；如果系统不加载用户级 Fontconfig 配置，会回退到 ~/.fonts/nvim-offline-build 软链接。字体文件不会复制到 HOME。若 HOME 中还没有 Fontconfig 缓存目录，脚本会将 ~/.cache/fontconfig 链接到安装目录的 cache/fontconfig/；已有缓存目录或其他软链接不会被覆盖。
+字体文件会复制到：
+
+~~~text
+~/.local/share/fonts/nvim-offline-build/
+~~~
+
+脚本只管理这个独立目录，不修改系统字体目录，也不会覆盖 HOME 中的其他字体。CentOS 7 的旧版 Fontconfig 如果不扫描 `~/.local/share/fonts`，脚本会额外创建兼容软链接 `~/.fonts/nvim-offline-build`。Fontconfig 缓存由系统生成在用户缓存目录中。
 
 检查字体是否可用：
 
@@ -131,26 +137,21 @@ fc-list | grep -i 'Maple Mono NF CN'
 fc-match 'Maple Mono NF CN'
 ~~~
 
-然后在 GNOME Terminal 或 KDE Konsole 的 Profile / Appearance 中选择 Maple Mono NF CN，并重新打开终端。
+然后在 GNOME Terminal 或 KDE Konsole 的 Profile / Appearance 中选择 Maple Mono NF CN，并重新打开终端。该字体包含 Nerd Font 图标字形，可用于显示 Neovim 的文件、状态栏和界面图标。
 
-如需为整台机器的所有用户注册字体（需要 root）：
-
-~~~bash
-sudo bash install-fonts.sh --system
-~~~
-
-卸载用户级注册：
+卸载用户字体：
 
 ~~~bash
 bash uninstall-fonts.sh
 ~~~
 
-卸载系统级注册：
+卸载只删除本工具安装的字体文件和必要的兼容软链接；如果字体目录中存在其他文件，会保留该目录及其中的文件。
+
+如需为整台机器的所有用户注册字体（需要 root），仍可使用：
 
 ~~~bash
+sudo bash install-fonts.sh --system
 sudo bash uninstall-fonts.sh --system
 ~~~
-
-卸载只移除 Fontconfig 注册入口，不删除安装目录内的字体文件。
 
 如果通过 SSH 在 Windows Terminal 中运行 Neovim，字体应安装并配置在 Windows 客户端；CentOS 上的字体安装不会改变 Windows Terminal 的字体。
