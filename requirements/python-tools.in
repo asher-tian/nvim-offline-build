@@ -1,0 +1,4 @@
+# Python tooling bundled for the Tcl language tools and Python formatting.
+# Resolved for CPython 3.11 on Linux x86_64 during the Windows build.
+tclint==0.9.0
+ruff==0.17.5

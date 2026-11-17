@@ -41,13 +41,13 @@ mise exec -- powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 首次构建会下载 Linux 运行时、字体、语言工具和插件，并生成依赖锁文件。将首次构建生成或更新的以下文件提交到 Git：
 
 - locks/npm/package-lock.json
-- locks/python/tclint-requirements.txt
+- locks/python/python-tools-requirements.txt
 - locks/plugins.lock.json
 
 提交锁文件：
 
 ~~~powershell
-git add locks/plugins.lock.json locks/npm/package-lock.json locks/python/tclint-requirements.txt
+git add locks/plugins.lock.json locks/npm/package-lock.json locks/python/python-tools-requirements.txt
 git commit -m "build: update offline dependency locks"
 ~~~
 
@@ -248,11 +248,35 @@ Telescope 搜索时输入关键词即可模糊匹配；按 `Enter` 打开结果�
 
 项目虚拟环境由 `pyrightconfig.json` 指定，项目内部模块搜索路径由 `extraPaths` 管理。Neovim 不需要额外选择解释器。
 
+Python 格式化使用离线包内置的 Ruff 0.17.5，不依赖项目 `.venv`，也不要求在项目中安装 Ruff。Conform 会把当前文件路径传给 Ruff，Ruff 自动读取项目中的 `pyproject.toml`（`[tool.ruff]`）、`ruff.toml` 或 `.ruff.toml`。
+
+例如项目的 `pyproject.toml`：
+
+~~~toml
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+~~~
+
+- `Space cf`：格式化当前 Python 文件。
+- `:w` / `Space w`：保存时自动格式化，规则来自项目配置。
+- `:ConformInfo`：查看当前文件实际使用的 Formatter。
+- `ruff check .`：手动执行代码检查；不会在保存时自动修复 Lint 问题。
+- `ruff check --select I --fix .`：需要时手动整理 import。
+
 ### 格式化
 
 - `Space cf`：格式化当前文件。
-- 已配置自动保存格式化的文件类型：JavaScript / TypeScript、JSON、HTML、CSS / SCSS、YAML、Markdown、Bash、Tcl、Verilog / SystemVerilog。
-- Python 当前没有配置 Conform Formatter；不要将 `Space f` 理解为已配置 Python 格式化。
+- 已配置自动保存格式化的文件类型：Python、JavaScript / TypeScript、JSON、HTML、CSS / SCSS、YAML、Markdown、Bash、Tcl、Verilog / SystemVerilog。
+- Python：使用离线包内置的 Ruff `ruff_format`，读取项目自己的 Ruff 配置。
 
 ### 常见开发流程
 

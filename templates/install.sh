@@ -147,7 +147,7 @@ NODE_VERSION="$("$RUNTIME/node/bin/node" --version)"
 
 PYTHON_VERSION="$(LD_LIBRARY_PATH="$RUNTIME/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" "$RUNTIME/python/bin/python3.11" --version 2>&1)"
 [ "$PYTHON_VERSION" = "Python 3.11.18" ] || fail "Unexpected bundled Python version: $PYTHON_VERSION"
-LD_LIBRARY_PATH="$RUNTIME/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" PYTHONPATH="$ROOT/runtime/python-packages" "$RUNTIME/python/bin/python3.11" -c 'import tclint, pygls' || fail "Tcl tooling Python dependencies could not be imported."
+LD_LIBRARY_PATH="$RUNTIME/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" PYTHONPATH="$ROOT/runtime/python-packages" "$RUNTIME/python/bin/python3.11" -c 'import tclint, pygls, ruff' || fail "Tcl tooling or Ruff Python dependencies could not be imported."
 
 NPM_VERSION="$(PATH="$RUNTIME/node/bin:$PATH" "$RUNTIME/node/bin/npm" --version)"
 [ "$NPM_VERSION" = "10.9.9" ] || fail "Unexpected npm version: $NPM_VERSION"

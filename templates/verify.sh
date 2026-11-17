@@ -63,6 +63,7 @@ printf '%s\n' "OK Maple Mono NF CN Regular (single TTF)"
 printf '%s\n' "== Required language servers =="
 for command_name in \
     pyright-langserver \
+    ruff \
     bash-language-server \
     vscode-html-language-server \
     vscode-css-language-server \
@@ -84,10 +85,28 @@ done
 printf '%s\n' "== Bundled Tcl Python runtime =="
 LD_LIBRARY_PATH="$ROOT/runtime/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" PYTHONPATH="$ROOT/runtime/python-packages" "$ROOT/runtime/python/bin/python3.11" -c 'import tclint, pygls; print("OK tclint + pygls")'
 
+printf '%s\n' "== Ruff formatter and project config =="
+mkdir -p "${TMPDIR:-/tmp}"
+ruff_smoke_dir="$(mktemp -d "${TMPDIR:-/tmp}/ruff-smoke.XXXXXX")"
+trap 'rm -rf "$ruff_smoke_dir"' EXIT HUP INT TERM
+cat > "$ruff_smoke_dir/pyproject.toml" <<'RUFF_CONFIG'
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.format]
+quote-style = "single"
+RUFF_CONFIG
+ruff_output="$(printf 'message="hello"\n' | ruff format --stdin-filename "$ruff_smoke_dir/sample.py" -)"
+printf '%s\n' "$ruff_output" | grep -F "message = 'hello'" >/dev/null || fail "Ruff did not load pyproject.toml formatting rules."
+printf '%s\n' "OK Ruff formatter reads project pyproject.toml"
+rm -rf "$ruff_smoke_dir"
+trap - EXIT HUP INT TERM
+
 printf '%s\n' "== Language tool versions =="
 "$ROOT/runtime/tools/bin/shellcheck" --version | sed -n '1,2p'
 printf '%s\n' "module top(input logic clk); endmodule" | "$ROOT/runtime/tools/bin/verible-verilog-format" --stdin_name smoke.sv - >/dev/null
 "$ROOT/runtime/commands/tclint" --version
+"$ROOT/runtime/commands/ruff" --version
 printf 'set value 1\n' | "$ROOT/runtime/commands/tclint" -
 printf 'set value 1\n' | "$ROOT/runtime/commands/tclfmt" - >/dev/null
 printf '#!/usr/bin/env bash\necho "$HOME"\n' | "$ROOT/runtime/tools/bin/shellcheck" -s bash -
@@ -109,6 +128,7 @@ MYGVIMRC="/etc/gvimrc" \
     -c 'lua assert(require("telescope"))' \
     -c 'lua assert(require("nvim-tree"))' \
     -c 'lua assert(require("conform"))' \
+    -c 'lua assert(require("conform").formatters_by_ft.python[1] == "ruff_format")' \
     -c 'lua assert(require("lualine"))' \
     -c 'lua assert(require("catppuccin"))' \
     -c 'lua assert(vim.fn.exists(":PyrightSetPythonPath") == 2)' \

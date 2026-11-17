@@ -331,7 +331,7 @@ Copy-Item -LiteralPath $fontFiles[0].FullName -Destination $fontDestination -For
 Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/MapleMono-OFL.txt") -Destination (Join-Path $fontDestination "OFL.txt") -Force
 Write-Host "Bundled Maple Mono NF CN $($font.version): $regularFontName only"
 
-# Prepare the Python runtime, Tcl LSP, ShellCheck and Verible before npm assembly.
+# Prepare the Python runtime, Tcl LSP, Ruff, ShellCheck and Verible before npm assembly.
 . (Join-Path $repoRoot "scripts/prepare-language-tools.ps1")
 
 # The npm download cache stores tarballs; npm-install cache stores a complete
@@ -684,9 +684,9 @@ Write-JsonNoBom -Path $pluginLockPath -Value $pluginLock
 Copy-Item -LiteralPath (Join-Path $repoRoot "versions.json") -Destination (Join-Path $bundleRoot "manifest/versions.json") -Force
 Copy-Item -LiteralPath $pluginLockPath -Destination (Join-Path $bundleRoot "manifest/plugins.lock.json") -Force
 Copy-Item -LiteralPath $npmLockSource -Destination (Join-Path $bundleRoot "manifest/npm-package-lock.json") -Force
-$pythonLockSource = Join-Path $repoRoot "locks/python/tclint-requirements.txt"
-Copy-Item -LiteralPath $pythonLockSource -Destination (Join-Path $bundleRoot "manifest/tclint-python-requirements.txt") -Force
-Copy-Item -LiteralPath (Join-Path $repoRoot "requirements/tclint.in") -Destination (Join-Path $bundleRoot "manifest/tclint-requirements.in") -Force
+$pythonLockSource = Join-Path $repoRoot "locks/python/python-tools-requirements.txt"
+Copy-Item -LiteralPath $pythonLockSource -Destination (Join-Path $bundleRoot "manifest/python-tools-requirements.txt") -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot "requirements/python-tools.in") -Destination (Join-Path $bundleRoot "manifest/python-tools.in") -Force
 
 $buildInfo = @"
 Target: CentOS 7 x86_64
@@ -696,6 +696,7 @@ Node.js: $($versions.runtime.node.version) (linux-x64-glibc-217)
 Maple Mono NF CN: $($font.version)
 Python: $($versions.runtime.python.version) (bundled for Tcl LSP)
 Tclint: 0.9.0
+Ruff: $($versions.tools.ruff.version)
 fd: $($versions.tools.fd.version)
 ShellCheck: $($versions.tools.shellcheck.version)
 Verible: $($versions.tools.verible.version)

@@ -89,9 +89,9 @@ Get-ChildItem -LiteralPath $shellcheckSourceCache -Force |
 # Resolve and install only prebuilt wheels for CPython 3.11 / Linux x86_64.
 # uv performs target-platform resolution on Windows, so no WSL/VM/Linux host is
 # needed. The generated lock includes hashes and is committed for repeatability.
-$pythonRequirementsInput = Join-Path $repoRoot "requirements/tclint.in"
-$pythonLockSource = Join-Path $repoRoot "locks/python/tclint-requirements.txt"
-$pythonLockWork = Join-Path $workRoot "python/tclint-requirements.txt"
+$pythonRequirementsInput = Join-Path $repoRoot "requirements/python-tools.in"
+$pythonLockSource = Join-Path $repoRoot "locks/python/python-tools-requirements.txt"
+$pythonLockWork = Join-Path $workRoot "python/python-tools-requirements.txt"
 $pythonPackages = Join-Path $bundleRoot "runtime/python-packages"
 $pythonMinor = ($python.version.Split(".")[0..1] -join ".")
 $pythonPlatform = $versions.target.pythonPlatform
@@ -100,12 +100,12 @@ New-Item -ItemType Directory -Force -Path (Split-Path -Parent $pythonLockWork), 
 
 if ((Test-Path $pythonLockSource) -and (-not $RefreshLocks)) {
     Copy-Item -LiteralPath $pythonLockSource -Destination $pythonLockWork -Force
-    Write-Host "Using pinned Tcl tooling Python lock: $pythonLockSource"
+    Write-Host "Using pinned Python tooling lock: $pythonLockSource"
 } else {
-    Write-Host "Resolving Tcl tooling Python dependencies for CPython $pythonMinor / $pythonPlatform"
+    Write-Host "Resolving Python tooling dependencies for CPython $pythonMinor / $pythonPlatform"
     & $uvExecutable pip compile $pythonRequirementsInput --python-version $pythonMinor --python-platform $pythonPlatform --only-binary :all: --generate-hashes --no-config --cache-dir $uvCacheRoot --output-file $pythonLockWork
     if ($LASTEXITCODE -ne 0) {
-        throw "uv pip compile failed for Tcl tooling dependencies."
+        throw "uv pip compile failed for Python tooling dependencies."
     }
 
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $pythonLockSource) | Out-Null
@@ -113,13 +113,13 @@ if ((Test-Path $pythonLockSource) -and (-not $RefreshLocks)) {
     Write-Host "Updated Python dependency lock: $pythonLockSource"
 }
 
-Write-Host "Installing Tcl tooling wheels into the offline bundle."
+Write-Host "Installing Python tooling wheels into the offline bundle."
 & $uvExecutable pip install --target $pythonPackages --python-version $pythonMinor --python-platform $pythonPlatform --only-binary :all: --require-hashes --no-config --cache-dir $uvCacheRoot --requirements $pythonLockWork
 if ($LASTEXITCODE -ne 0) {
-    throw "uv pip install failed for Tcl tooling dependencies."
+    throw "uv pip install failed for Python tooling dependencies."
 }
 
-# POSIX launchers keep the Tcl LSP and CLI independent of CentOS system Python.
+# POSIX launchers keep bundled Python tools independent of CentOS system Python.
 $commandRoot = Join-Path $bundleRoot "runtime/commands"
 New-Item -ItemType Directory -Force -Path $commandRoot | Out-Null
 
@@ -148,6 +148,14 @@ export LD_LIBRARY_PATH="$ROOT/runtime/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_
 export PYTHONPATH="$ROOT/runtime/python-packages${PYTHONPATH:+:$PYTHONPATH}"
 exec "$ROOT/runtime/python/bin/python3.11" -c 'import sys; from tclint.cli.tclfmt import main; sys.exit(main())' "$@"
 '@
+    "ruff" = @'
+#!/bin/sh
+set -eu
+ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+export LD_LIBRARY_PATH="$ROOT/runtime/python/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export PYTHONPATH="$ROOT/runtime/python-packages${PYTHONPATH:+:$PYTHONPATH}"
+exec "$ROOT/runtime/python/bin/python3.11" -m ruff "$@"
+'@
 }
 
 foreach ($commandName in $pythonCommandShims.Keys) {
@@ -159,6 +167,7 @@ $bundleLicenses = Join-Path $bundleRoot "licenses"
 New-Item -ItemType Directory -Force -Path $bundleLicenses | Out-Null
 foreach ($licenseFile in @(
     "tclint-MIT.txt",
+    "ruff-MIT.txt",
     "Verible-Apache-2.0.txt",
     "ShellCheck-GPL-3.0.txt",
     "python-build-standalone-MPL-2.0.txt",
@@ -171,4 +180,4 @@ foreach ($licenseFile in @(
     Copy-Item -LiteralPath $sourceLicense -Destination $bundleLicenses -Force
 }
 
-Write-Host "Prepared Tcl LSP/formatter, ShellCheck, Verible and bundled Python $($python.version)."
+Write-Host "Prepared Tcl LSP/formatter, Ruff, ShellCheck, Verible and bundled Python $($python.version)."
