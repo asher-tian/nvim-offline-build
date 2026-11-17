@@ -69,6 +69,7 @@ write_config() {
     xml_cache_dir="$(xml_escape "$CACHE_DIR")"
 
     mkdir -p "$(dirname "$config_path")"
+    [ ! -L "$config_path" ] || fail "Refusing to replace a Fontconfig symlink: $config_path"
     if [ -e "$config_path" ] && ! grep -q 'Managed by nvim-offline-build' "$config_path"; then
         fail "Refusing to overwrite an existing Fontconfig file: $config_path"
     fi
