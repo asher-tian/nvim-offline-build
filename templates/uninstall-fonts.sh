@@ -73,7 +73,9 @@ remove_legacy_state_link() {
     if [ -f "$state_file" ]; then
         old_link="$(cat "$state_file")"
         [ -n "$old_link" ] && remove_managed_symlink "$old_link" "$expected_target"
-        rm -f "$state_file"
+        if [ -w "$STATE_DIR" ]; then
+            rm -f "$state_file"
+        fi
     fi
 }
 
