@@ -310,19 +310,18 @@ if (Test-Path $fontExtractRoot) {
     Remove-Item -LiteralPath $fontExtractRoot -Recurse -Force
 }
 Expand-Archive -LiteralPath $fontCached -DestinationPath $fontExtractRoot -Force
-$fontFiles = @(Get-ChildItem -LiteralPath $fontExtractRoot -Filter "*.ttf" -File -Recurse)
-if ($fontFiles.Count -eq 0) {
-    throw "Maple Mono NF archive did not contain any TTF files."
+$regularFontName = "MapleMono-NF-CN-Regular.ttf"
+$fontFiles = @(Get-ChildItem -LiteralPath $fontExtractRoot -Filter $regularFontName -File -Recurse)
+if ($fontFiles.Count -ne 1) {
+    throw "Expected exactly one $regularFontName in Maple Mono NF CN archive; found $($fontFiles.Count)."
 }
 
 $fontDestination = Join-Path $bundleRoot "fonts/maple-mono"
 New-Item -ItemType Directory -Force -Path $fontDestination | Out-Null
-foreach ($fontFile in $fontFiles) {
-    Copy-Item -LiteralPath $fontFile.FullName -Destination $fontDestination -Force
-}
+Copy-Item -LiteralPath $fontFiles[0].FullName -Destination $fontDestination -Force
 
 Copy-Item -LiteralPath (Join-Path $repoRoot "licenses/MapleMono-OFL.txt") -Destination (Join-Path $fontDestination "OFL.txt") -Force
-Write-Host "Bundled Maple Mono NF CN $($font.version): $($fontFiles.Count) TTF files"
+Write-Host "Bundled Maple Mono NF CN $($font.version): $regularFontName only"
 
 # Prepare the Python runtime, Tcl LSP, ShellCheck and Verible before npm assembly.
 . (Join-Path $repoRoot "scripts/prepare-language-tools.ps1")
