@@ -39,7 +39,6 @@ require("which-key").setup({
     delay = 400,
 })
 
-require("Comment").setup()
 require("nvim-autopairs").setup({})
 require("nvim-surround").setup({})
 

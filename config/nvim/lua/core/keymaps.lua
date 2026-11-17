@@ -15,6 +15,3 @@ map("n", "<leader>f", function()
 end, { desc = "Format buffer" })
 
 map("n", "<leader>xx", vim.diagnostic.setloclist, { desc = "Diagnostics to location list" })
-map("n", "[d", vim.diagnostic.goto_prev, { desc = "Previous diagnostic" })
-map("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
-map("n", "<leader>dl", vim.diagnostic.open_float, { desc = "Show diagnostic" })

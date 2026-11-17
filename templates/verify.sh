@@ -98,6 +98,15 @@ printf '%s\n' "== Plugin/config smoke test =="
     -c 'lua assert(require("conform"))' \
     -c 'lua assert(require("lualine"))' \
     -c 'lua assert(require("catppuccin"))' \
+    -c 'lua assert(vim.fn.maparg("gc", "n") ~= "")' \
+    -c 'lua assert(vim.fn.maparg("gcc", "n") ~= "")' \
+    -c 'lua assert(vim.fn.maparg("grr", "n") ~= "")' \
+    -c 'lua assert(vim.fn.maparg("grn", "n") ~= "")' \
+    -c 'lua assert(vim.fn.maparg("gra", "n") ~= "")' \
+    -c 'lua assert(vim.fn.maparg("gri", "n") ~= "")' \
+    -c 'lua assert(vim.fn.maparg("gr", "n") == "")' \
+    -c 'setlocal filetype=python' \
+    -c 'lua assert(vim.bo.commentstring == "# %s")' \
     -c 'lua assert(vim.filetype.match({filename = "sample.icl"}) == "icl")' \
     -c 'lua assert(vim.filetype.match({filename = "sample.pdl"}) == "pdl")' \
     -c 'lua assert(vim.filetype.match({filename = "sample.sdc"}) == "tcl")' \

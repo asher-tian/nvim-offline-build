@@ -77,11 +77,6 @@
       "ref": "main"
     },
     {
-      "name": "Comment.nvim",
-      "repo": "https://github.com/numToStr/Comment.nvim.git",
-      "ref": "master"
-    },
-    {
       "name": "nvim-autopairs",
       "repo": "https://github.com/windwp/nvim-autopairs.git",
       "ref": "master"

@@ -92,12 +92,6 @@
       "commit": "dc7698f932792a764d3db95fedee26c38e728355"
     },
     {
-      "name": "Comment.nvim",
-      "repo": "https://github.com/numToStr/Comment.nvim.git",
-      "ref": "master",
-      "commit": "e30b7f2008e52442154b66f7c519bfd2f1e32acb"
-    },
-    {
       "name": "nvim-autopairs",
       "repo": "https://github.com/windwp/nvim-autopairs.git",
       "ref": "master",
